@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medica - Panel Pacjenta</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo"><span>Medica</span> Portal Kliniki</div>
+        <div id="header-info"></div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2 id="patient-welcome">Witaj, </h2>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Karta medyczna i Informacje</h3>
+                <p><strong>Historia Choroby:</strong> <span id="pat-history"></span></p>
+                <p><strong>Leki:</strong> <span id="pat-meds"></span></p>
+                <p><strong>Notatki Lekarza:</strong> <span id="pat-notes"></span></p>
+            </div>
+            
+            <div class="card">
+                <h3>Wyniki Badań i Dokumenty</h3>
+                <h4>Wyniki Badań (Ostatnie)</h4>
+                <ul id="pat-results" style="padding-left: 20px; line-height: 1.6;"></ul>
+                
+                <h4>Wgrane Dokumenty</h4>
+                <ul id="pat-docs" style="padding-left: 20px; line-height: 1.6;"></ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Twoje Wizyty</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Lekarz</th>
+                        <th>Cel Wizyty</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="pat-appointments">
+                    <!-- Loaded via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const user = JSON.parse(localStorage.getItem('medicaUser'));
+            if (!user || user.role !== 'patient') return;
+
+            document.getElementById('patient-welcome').textContent = `Karta Pacjenta: ${user.name}`;
+            
+            // Info
+            document.getElementById('pat-history').textContent = user.history;
+            document.getElementById('pat-meds').textContent = user.meds;
+            document.getElementById('pat-notes').textContent = user.notes;
+
+            // Docs
+            const docsList = document.getElementById('pat-docs');
+            if(user.docs && user.docs.length > 0) {
+                user.docs.forEach(doc => {
+                    docsList.innerHTML += `<li>📎 ${doc}</li>`;
+                });
+            } else {
+                docsList.innerHTML = `<li>Brak dokumentów</li>`;
+            }
+
+            // Results
+            const userResults = clinicData.testResults.filter(t => t.patientId === user.id);
+            const resultsList = document.getElementById('pat-results');
+            if(userResults.length > 0) {
+                userResults.forEach(res => {
+                    const doctor = getDoctorData(res.doctorId);
+                    resultsList.innerHTML += `<li><strong>${res.date} - ${res.name}:</strong> ${res.result} (Zlecił: ${doctor.name})</li>`;
+                });
+            } else {
+                resultsList.innerHTML = `<li>Brak wyników badań</li>`;
+            }
+
+            // Appointments
+            const userAppts = clinicData.appointments.filter(a => a.patientId === user.id);
+            const apptBody = document.getElementById('pat-appointments');
+            
+            // Sort by date descending approx 
+            userAppts.sort((a,b) => a.date.localeCompare(b.date));
+
+            userAppts.forEach(appt => {
+                const doctor = getDoctorData(appt.doctorId);
+                const isDone = appt.status === 'Zrealizowana';
+                apptBody.innerHTML += `
+                    <tr>
+                        <td>${appt.date}</td>
+                        <td>${doctor.name}</td>
+                        <td>${appt.notes}</td>
+                        <td><span class="tag" style="background:${isDone ? '#E0E0E0' : 'var(--primary-light)'}; color: ${isDone ? '#757575' : '#1B5E20'}">${appt.status}</span></td>
+                    </tr>
+                `;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medica - Logowanie</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo"><span>Medica</span> Portal Kliniki</div>
+    </header>
+
+    <div class="container login-container">
+        <div class="card">
+            <h2>Logowanie do portalu</h2>
+            <p style="color:var(--text-muted); font-size: 14px;">Sprawdź plik README.md po dane logowania</p>
+            <div id="login-error" class="error-msg hidden">Nieprawidłowy login lub hasło.</div>
+            
+            <form id="login-form">
+                <label>Login:</label>
+                <input type="text" id="username" required placeholder="np. a.mickiewicz">
+                
+                <label>Hasło:</label>
+                <input type="password" id="password" required>
+                
+                <button type="submit" style="width: 100%;">Zaloguj się</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userBox = document.getElementById('username').value.trim();
+            const passBox = document.getElementById('password').value;
+            const error = document.getElementById('login-error');
+
+            const user = clinicData.users.find(u => u.username === userBox && u.password === passBox);
+
+            if (user) {
+                // remove sensitive data
+                const safeUser = { ...user };
+                delete safeUser.password;
+                localStorage.setItem('medicaUser', JSON.stringify(safeUser));
+                
+                if (user.role === 'patient') {
+                    window.location.href = 'patient.html';
+                } else {
+                    window.location.href = 'doctor.html';
+                }
+            } else {
+                error.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

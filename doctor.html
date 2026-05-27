@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medica - Panel Lekarza</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo"><span>Medica</span> Portal Kliniki</div>
+        <div id="header-info"></div>
+    </header>
+
+    <div class="container">
+        
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Twoje Wizyty</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Pacjent</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doc-appointments">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Lista Pacjentów Kliniki</h3>
+                <p style="font-size: 14px; color: var(--text-muted);">Aby uzyskać pełen dostęp do karty medycznej pacjenta, autoryzuj dostęp podając datę urodzenia.</p>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Pacjent</th>
+                            <th>Akcja</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doc-patients">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="card" style="grid-column: span 1;">
+                 <h3>Zlecone Wyniki Badań (Moja autoryzacja)</h3>
+                 <ul id="doc-results" style="padding-left: 20px; line-height: 1.6;"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for DOB verification -->
+    <div id="dob-modal" class="modal">
+        <div class="modal-content">
+            <h3>Weryfikacja tożsamości</h3>
+            <p id="verify-patient-name" style="font-weight: bold;"></p>
+            <p>Podaj datę urodzenia pacjenta, aby otworzyć kartę:</p>
+            <input type="date" id="verify-dob">
+            <p id="verify-error" class="error-msg hidden">Data urodzenia niezgodna!</p>
+            <div style="display:flex; justify-content: space-between;">
+                <button class="secondary" onclick="closeModal()">Anuluj</button>
+                <button onclick="verifyAndOpen()">Otwórz Kartę</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let selectedPatientId = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const user = JSON.parse(localStorage.getItem('medicaUser'));
+            if (!user || user.role !== 'doctor') return;
+
+            // My Appointments
+            const myAppts = clinicData.appointments.filter(a => a.doctorId === user.id);
+            const apptBody = document.getElementById('doc-appointments');
+            myAppts.sort((a,b) => a.date.localeCompare(b.date));
+
+            myAppts.forEach(appt => {
+                const pat = getPatientData(appt.patientId);
+                const isDone = appt.status === 'Zrealizowana';
+                apptBody.innerHTML += `
+                    <tr>
+                        <td>${appt.date}</td>
+                        <td>${pat.name}</td>
+                        <td><span class="tag" style="background:${isDone ? '#E0E0E0' : 'var(--primary-light)'}; color: ${isDone ? '#757575' : '#1B5E20'}">${appt.status}</span></td>
+                    </tr>
+                `;
+            });
+
+            // Zlecone badania
+            const myResults = clinicData.testResults.filter(t => t.doctorId === user.id);
+            const resBody = document.getElementById('doc-results');
+            if(myResults.length > 0){
+                myResults.forEach(res => {
+                    const pat = getPatientData(res.patientId);
+                    resBody.innerHTML += `<li><strong>${pat.name}</strong> (${res.date} - ${res.name}): ${res.result}</li>`;
+                });
+            } else {
+                resBody.innerHTML = `<li>Brak przypisanych badań</li>`;
+            }
+
+
+            // Patient List
+            const patientsList = clinicData.users.filter(u => u.role === 'patient');
+            const ptBody = document.getElementById('doc-patients');
+            
+            patientsList.forEach(pt => {
+                ptBody.innerHTML += `
+                    <tr>
+                        <td>${pt.name}</td>
+                        <td><button class="secondary" onclick="requestAccess('${pt.id}', '${pt.name}')">Wejdź w kartę</button></td>
+                    </tr>
+                `;
+            });
+        });
+
+        function requestAccess(ptId, ptName) {
+            selectedPatientId = ptId;
+            document.getElementById('verify-patient-name').textContent = ptName;
+            document.getElementById('verify-dob').value = '';
+            document.getElementById('verify-error').classList.add('hidden');
+            document.getElementById('dob-modal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('dob-modal').style.display = 'none';
+            selectedPatientId = null;
+        }
+
+        function verifyAndOpen() {
+            const inputDob = document.getElementById('verify-dob').value;
+            const pt = getPatientData(selectedPatientId);
+            
+            if (pt && pt.dob === inputDob) {
+                // Success
+                localStorage.setItem('activePatientId', selectedPatientId);
+                window.location.href = 'doctor_patient_view.html';
+            } else {
+                document.getElementById('verify-error').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
