@@ -546,7 +546,7 @@ input:focus {
 }
 
 .modal-content {
-    background-color: var(--card-bg);
+    background-color: var(--medica-card-bg);
     margin: 15% auto; 
     padding: 20px;
     border: 1px solid #888;
