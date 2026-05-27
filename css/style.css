@@ -553,3 +553,41 @@ input:focus {
     width: 300px;
     border-radius: 8px;
 }
+
+/* ====== LEGACY CLASSES FOR DOCTOR.HTML AND PATIENT.HTML ====== */
+header {
+    background-color: var(--medica-card-bg);
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 4px solid var(--medica-green-mid);
+}
+
+header .logo span {
+    color: var(--medica-green-mid);
+    font-weight: bold;
+    font-size: 24px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tag {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    background: var(--medica-green-light);
+    color: var(--medica-green-text);
+}
