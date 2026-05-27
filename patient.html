@@ -7,50 +7,100 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header>
-        <div class="logo"><span>Medica</span> Portal Kliniki</div>
-        <div id="header-info"></div>
-    </header>
-
-    <div class="container">
-        <div class="card">
-            <h2 id="patient-welcome">Witaj, </h2>
+    <nav class="top-nav">
+        <div class="logo"><span class="box">M</span> Medica</div>
+        <div class="nav-links">
+            <a href="#" class="active">Moje Zdrowie</a>
+            <a href="#">Wizyty i e-Rejestracja</a>
+            <a href="#">Wyniki Badań</a>
         </div>
+        <div class="user-profile">
+            <div class="avatar">P</div>
+            <span id="header-info"></span>
+            <button class="secondary" style="padding: 6px 12px; margin-left: 15px;" onclick="logout()">Wyloguj</button>
+        </div>
+    </nav>
 
-        <div class="dashboard-grid">
-            <div class="card">
-                <h3>Karta medyczna i Informacje</h3>
-                <p><strong>Historia Choroby:</strong> <span id="pat-history"></span></p>
-                <p><strong>Leki:</strong> <span id="pat-meds"></span></p>
-                <p><strong>Notatki Lekarza:</strong> <span id="pat-notes"></span></p>
+    <div class="layout-wrapper">
+        <aside class="sidebar">
+            <a class="sidebar-item active">Przegląd główny</a>
+            <a class="sidebar-item">Moje leki</a>
+            <a class="sidebar-item">Historia skierowań</a>
+            <a class="sidebar-item">Dokumentacja</a>
+        </aside>
+
+        <main class="main-content">
+            <div class="patient-header">
+                <div class="ph-left">
+                    <div class="ph-avatar" id="big-avatar" style="background:var(--medica-green-light); color:var(--medica-green-text);">JA</div>
+                    <div class="ph-info">
+                        <h2 id="patient-welcome">Witaj, </h2>
+                        <div class="ph-meta">
+                            <span>PESEL: <span id="pat-pesel">----</span></span> &bull; 
+                            <span>Urodzony: <span id="pat-dob">----</span></span>
+                        </div>
+                        <div class="ph-tags">
+                            <span class="badge badge-green">Aktywny plan opieki</span>
+                            <span class="badge badge-blue">Portal pacjenta</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="card">
-                <h3>Wyniki Badań i Dokumenty</h3>
-                <h4>Wyniki Badań (Ostatnie)</h4>
-                <ul id="pat-results" style="padding-left: 20px; line-height: 1.6;"></ul>
+
+            <div class="dashboard-grid">
+                <!-- Informacje medyczne -->
+                <div class="card">
+                    <div class="section-header">
+                        <h3>Ostatnie diagnozy / Historia chorób</h3>
+                    </div>
+                    <div style="font-size: 14px; background: var(--medica-green-light); padding: 15px; border-radius: 8px; border-left: 4px solid var(--medica-green-mid);">
+                        <p style="margin: 0 0 10px 0;"><strong>Aktualne rozpoznania:</strong> <span id="pat-history">Brak</span></p>
+                        <p style="margin: 0; color: var(--medica-text-secondary);"><strong style="color:var(--medica-text-primary);">Notatki od lekarzy:</strong> <span id="pat-notes">Brak</span></p>
+                    </div>
+                    
+                    <div class="section-header" style="margin-top: 25px;">
+                        <h3>Aktualnie przyjmowane leki</h3>
+                    </div>
+                    <div class="allergy-row" style="background: white; border: 1px solid var(--medica-border); color: var(--medica-text-primary);">
+                        💊 <span id="pat-meds">Brak zdefiniowanych leków stałych</span>
+                    </div>
+                </div>
                 
-                <h4>Wgrane Dokumenty</h4>
-                <ul id="pat-docs" style="padding-left: 20px; line-height: 1.6;"></ul>
-            </div>
-        </div>
+                <!-- Dokumenty i wyniki -->
+                <div class="card">
+                    <div class="section-header">
+                        <h3>Wyniki Badań (Ostatnie)</h3>
+                    </div>
+                    <ul id="pat-results" style="padding-left: 20px; line-height: 1.6; font-size: 14px; margin-bottom: 25px;"></ul>
+                    
+                    <div class="section-header">
+                        <h3>Wgrana Dokumentacja e-Zdrowie</h3>
+                    </div>
+                    <ul id="pat-docs" style="padding-left: 20px; line-height: 1.6; font-size: 14px;"></ul>
+                </div>
 
-        <div class="card">
-            <h3>Twoje Wizyty</h3>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Lekarz</th>
-                        <th>Cel Wizyty</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="pat-appointments">
-                    <!-- Loaded via JS -->
-                </tbody>
-            </table>
-        </div>
+                <!-- Wizyty na dole całej długości -->
+                <div class="card" style="grid-column: span 2;">
+                    <div class="section-header">
+                        <h3>Twoje Wizyty i Rejestracje</h3>
+                        <button style="padding: 6px 12px;">+ Umów wizytę</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data wizyty</th>
+                                <th>Lekarz Prowadzący</th>
+                                <th>Cel Wizyty</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pat-appointments">
+                            <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script src="js/data.js"></script>
@@ -58,23 +108,35 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const user = JSON.parse(localStorage.getItem('medicaUser'));
-            if (!user || user.role !== 'patient') return;
+            if (!user || user.role !== 'patient') {
+                window.location.href = 'index.html';
+                return;
+            }
 
-            document.getElementById('patient-welcome').textContent = `Karta Pacjenta: ${user.name}`;
+            document.getElementById('header-info').textContent = user.name;
+            document.getElementById('patient-welcome').textContent = \`Witaj, \${user.name}\`;
+            
+            // Set initials
+            const inits = user.name.split(' ').map(n=>n[0]).join('').substring(0,2);
+            document.querySelector('.avatar').textContent = inits;
+            document.getElementById('big-avatar').textContent = inits;
+
+            document.getElementById('pat-pesel').textContent = user.id.replace('PAT', '980102') + '123';
+            document.getElementById('pat-dob').textContent = user.dob || "Brak danych";
             
             // Info
             document.getElementById('pat-history').textContent = user.history;
-            document.getElementById('pat-meds').textContent = user.meds;
+            document.getElementById('pat-meds').textContent = user.meds || 'Brak danych lekowych';
             document.getElementById('pat-notes').textContent = user.notes;
 
             // Docs
             const docsList = document.getElementById('pat-docs');
             if(user.docs && user.docs.length > 0) {
                 user.docs.forEach(doc => {
-                    docsList.innerHTML += `<li>📎 ${doc}</li>`;
+                    docsList.innerHTML += \`<li><a href="#" style="text-decoration:none;">📋 \${doc}</a> (Plik PDF)</li>\`;
                 });
             } else {
-                docsList.innerHTML = `<li>Brak dokumentów</li>`;
+                docsList.innerHTML = \`<li style="color:var(--medica-text-secondary);">Brak zdigitalizowanych dokumentów</li>\`;
             }
 
             // Results
@@ -83,10 +145,10 @@
             if(userResults.length > 0) {
                 userResults.forEach(res => {
                     const doctor = getDoctorData(res.doctorId);
-                    resultsList.innerHTML += `<li><strong>${res.date} - ${res.name}:</strong> ${res.result} (Zlecił: ${doctor.name})</li>`;
+                    resultsList.innerHTML += \`<li style="margin-bottom:8px;"><strong>\${res.date} - <span style="color:var(--medica-green-mid);">\${res.name}</span>:</strong> \${res.result} <br><small style="color:var(--medica-text-secondary);">Zlecił: \${doctor.name}</small></li>\`;
                 });
             } else {
-                resultsList.innerHTML = `<li>Brak wyników badań</li>`;
+                resultsList.innerHTML = \`<li style="color:var(--medica-text-secondary);">Brak zarchiwizowanych wyników badań laboratoryjnych</li>\`;
             }
 
             // Appointments
@@ -94,19 +156,23 @@
             const apptBody = document.getElementById('pat-appointments');
             
             // Sort by date descending approx 
-            userAppts.sort((a,b) => a.date.localeCompare(b.date));
+            userAppts.sort((a,b) => b.date.localeCompare(a.date));
+
+            if (userAppts.length === 0) {
+                apptBody.innerHTML = \`<tr><td colspan="4" style="text-align:center; color:var(--medica-text-secondary); padding: 20px;">Brak historii wizyt / Brak nadchodzących rezerwacji</td></tr>\`;
+            }
 
             userAppts.forEach(appt => {
                 const doctor = getDoctorData(appt.doctorId);
                 const isDone = appt.status === 'Zrealizowana';
-                apptBody.innerHTML += `
+                apptBody.innerHTML += \`
                     <tr>
-                        <td>${appt.date}</td>
-                        <td>${doctor.name}</td>
-                        <td>${appt.notes}</td>
-                        <td><span class="tag" style="background:${isDone ? '#E0E0E0' : 'var(--primary-light)'}; color: ${isDone ? '#757575' : '#1B5E20'}">${appt.status}</span></td>
+                        <td>\${appt.date}</td>
+                        <td style="font-weight:500;">\${doctor.name}</td>
+                        <td style="color:var(--medica-text-secondary);">\${appt.reason || 'Konsultacja medyczna'}</td>
+                        <td><span class="badge \${isDone ? 'badge-gray' : 'badge-green'}">\${appt.status}</span></td>
                     </tr>
-                `;
+                \`;
             });
         });
     </script>

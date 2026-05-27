@@ -7,65 +7,90 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header>
-        <div class="logo"><span>Medica</span> Portal Kliniki</div>
-        <div id="header-info"></div>
-    </header>
+    <nav class="top-nav">
+        <div class="logo"><span class="box">M</span> Medica</div>
+        <div class="nav-links">
+            <a href="#" class="active">Pulpit lekarza</a>
+            <a href="#">Pacjenci</a>
+            <a href="#">Wizyty</a>
+        </div>
+        <div class="user-profile">
+            <div class="avatar">L</div>
+            <span id="header-info"></span>
+            <button class="secondary" style="padding: 6px 12px; margin-left: 15px;" onclick="logout()">Wyloguj</button>
+        </div>
+    </nav>
 
-    <div class="container">
-        
-        <div class="dashboard-grid">
-            <div class="card">
-                <h3>Twoje Wizyty</h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Pacjent</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="doc-appointments">
-                        <!-- Loaded via JS -->
-                    </tbody>
-                </table>
-            </div>
+    <div class="layout-wrapper">
+        <aside class="sidebar">
+            <a class="sidebar-item active">Przegląd główny</a>
+            <a class="sidebar-item">Mój kalendarz</a>
+            <a class="sidebar-item">Zlecenia badań</a>
+            <a class="sidebar-item">Wiadomości</a>
+        </aside>
 
-            <div class="card">
-                <h3>Lista Pacjentów Kliniki</h3>
-                <p style="font-size: 14px; color: var(--text-muted);">Aby uzyskać pełen dostęp do karty medycznej pacjenta, autoryzuj dostęp podając datę urodzenia.</p>
-                
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Pacjent</th>
-                            <th>Akcja</th>
-                        </tr>
-                    </thead>
-                    <tbody id="doc-patients">
-                        <!-- Loaded via JS -->
-                    </tbody>
-                </table>
+        <main class="main-content">
+            <div class="patient-header" style="margin-bottom: 30px;">
+                <div>
+                    <h2 style="margin:0 0 5px 0;">Witaj w portalu, Dr. <span id="doctor-name"></span></h2>
+                    <p style="margin:0; color:var(--medica-text-secondary); font-size:14px;">Masz dzisiaj zaplanowane wizyty. Poniżej znajduje się lista twoich pacjentów.</p>
+                </div>
             </div>
             
-            <div class="card" style="grid-column: span 1;">
-                 <h3>Zlecone Wyniki Badań (Moja autoryzacja)</h3>
-                 <ul id="doc-results" style="padding-left: 20px; line-height: 1.6;"></ul>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Twoje dzisiejsze wizyty</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Godzina / Data</th>
+                                <th>Pacjent</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="doc-appointments">
+                            <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h3>Lista Pacjentów Kliniki</h3>
+                    <p style="font-size: 13px; color: var(--medica-text-secondary); margin-bottom: 15px;">Aby uzyskać pełen dostęp do karty, autoryzuj dostęp podając datę urodzenia.</p>
+                    
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Pacjent</th>
+                                <th>ID Pacjenta</th>
+                                <th>Akcja</th>
+                            </tr>
+                        </thead>
+                        <tbody id="doc-patients">
+                            <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="card" style="grid-column: span 1;">
+                     <h3>Zlecone Wyniki Badań</h3>
+                     <ul id="doc-results" style="padding-left: 20px; line-height: 1.6; font-size: 14px;"></ul>
+                </div>
             </div>
-        </div>
+        </main>
     </div>
 
     <!-- Modal for DOB verification -->
     <div id="dob-modal" class="modal">
         <div class="modal-content">
-            <h3>Weryfikacja tożsamości</h3>
-            <p id="verify-patient-name" style="font-weight: bold;"></p>
-            <p>Podaj datę urodzenia pacjenta, aby otworzyć kartę:</p>
+            <h3 style="margin-top:0;">Weryfikacja tożsamości</h3>
+            <p id="verify-patient-name" style="font-weight: 500; font-size: 16px; margin: 15px 0 5px 0;"></p>
+            <p style="font-size: 13px; color: var(--medica-text-secondary); margin-bottom: 15px;">Podaj datę urodzenia pacjenta (RRRR-MM-DD), aby otworzyć kartę medyczną:</p>
             <input type="date" id="verify-dob">
             <p id="verify-error" class="error-msg hidden">Data urodzenia niezgodna!</p>
-            <div style="display:flex; justify-content: space-between;">
+            <div style="display:flex; justify-content: space-between; margin-top: 20px;">
                 <button class="secondary" onclick="closeModal()">Anuluj</button>
-                <button onclick="verifyAndOpen()">Otwórz Kartę</button>
+                <button onclick="verifyAndOpen()">Autoryzuj</button>
             </div>
         </div>
     </div>
@@ -77,7 +102,14 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             const user = JSON.parse(localStorage.getItem('medicaUser'));
-            if (!user || user.role !== 'doctor') return;
+            if (!user || user.role !== 'doctor') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('header-info').textContent = user.name;
+            const docNameEl = document.getElementById('doctor-name');
+            if (docNameEl) docNameEl.textContent = user.name.split(' ').slice(1).join(' '); // just last name
 
             // My Appointments
             const myAppts = clinicData.appointments.filter(a => a.doctorId === user.id);
@@ -90,44 +122,48 @@
                 apptBody.innerHTML += `
                     <tr>
                         <td>${appt.date}</td>
-                        <td>${pat.name}</td>
-                        <td><span class="tag" style="background:${isDone ? '#E0E0E0' : 'var(--primary-light)'}; color: ${isDone ? '#757575' : '#1B5E20'}">${appt.status}</span></td>
+                        <td style="font-weight: 500;">${pat.name}</td>
+                        <td><span class="badge ${isDone ? 'badge-gray' : 'badge-green'}">${appt.status}</span></td>
                     </tr>
                 `;
             });
 
             // Zlecone badania
             const myResults = clinicData.testResults.filter(t => t.doctorId === user.id);
-            const resBody = document.getElementById('doc-results');
-            if(myResults.length > 0){
+            const resList = document.getElementById('doc-results');
+            if(myResults.length > 0) {
                 myResults.forEach(res => {
                     const pat = getPatientData(res.patientId);
-                    resBody.innerHTML += `<li><strong>${pat.name}</strong> (${res.date} - ${res.name}): ${res.result}</li>`;
+                    resList.innerHTML += `<li style="margin-bottom: 8px;"><strong>${pat.name}</strong> - ${res.name}: <span style="color:var(--medica-text-secondary);">${res.result}</span></li>`;
                 });
             } else {
-                resBody.innerHTML = `<li>Brak przypisanych badań</li>`;
+                resList.innerHTML = `<li style="color:var(--medica-text-secondary);">Brak zleconych wyników.</li>`;
             }
 
-
-            // Patient List
-            const patientsList = clinicData.users.filter(u => u.role === 'patient');
-            const ptBody = document.getElementById('doc-patients');
-            
-            patientsList.forEach(pt => {
-                ptBody.innerHTML += `
+            // All Patients (with modal trigger)
+            const patBody = document.getElementById('doc-patients');
+            clinicData.patients.forEach(p => {
+                patBody.innerHTML += `
                     <tr>
-                        <td>${pt.name}</td>
-                        <td><button class="secondary" onclick="requestAccess('${pt.id}', '${pt.name}')">Wejdź w kartę</button></td>
+                        <td style="font-weight: 500;">${p.name}</td>
+                        <td style="color:var(--medica-text-secondary);">${p.id}</td>
+                        <td><button class="secondary" style="padding: 6px 12px;" onclick="openVerifyModal('${p.id}', '${p.name}')">Otwórz kartę</button></td>
                     </tr>
                 `;
             });
+
+            // Update avatar initials
+            const avatar = document.querySelector('.avatar');
+            if (avatar) {
+                avatar.textContent = user.name.split(' ').map(n=>n[0]).join('').substring(0,2);
+            }
         });
 
-        function requestAccess(ptId, ptName) {
-            selectedPatientId = ptId;
-            document.getElementById('verify-patient-name').textContent = ptName;
-            document.getElementById('verify-dob').value = '';
+        function openVerifyModal(pId, pName) {
+            selectedPatientId = pId;
+            document.getElementById('verify-patient-name').textContent = pName;
             document.getElementById('verify-error').classList.add('hidden');
+            document.getElementById('verify-dob').value = '';
             document.getElementById('dob-modal').style.display = 'block';
         }
 
@@ -137,13 +173,12 @@
         }
 
         function verifyAndOpen() {
-            const inputDob = document.getElementById('verify-dob').value;
-            const pt = getPatientData(selectedPatientId);
+            const dateVal = document.getElementById('verify-dob').value;
+            const pat = getPatientData(selectedPatientId);
             
-            if (pt && pt.dob === inputDob) {
-                // Success
-                localStorage.setItem('activePatientId', selectedPatientId);
-                window.location.href = 'doctor_patient_view.html';
+            if (pat && pat.dob === dateVal) {
+                closeModal();
+                window.location.href = \`doctor_patient_view.html?patId=\${selectedPatientId}\`;
             } else {
                 document.getElementById('verify-error').classList.remove('hidden');
             }
