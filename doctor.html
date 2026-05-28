@@ -3,209 +3,647 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medica - Panel Lekarza</title>
+    <title>Medica+ | Panel Lekarza</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        select, textarea { font-family: inherit; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px 14px; border: 1px solid #D0CCC4;
+            border-radius: 8px; box-sizing: border-box; font-size: 14px;
+            font-family: inherit; background: white; color: var(--medica-text-primary);
+            margin: 0;
+        }
+        .form-group select { cursor: pointer; }
+        .form-group textarea { resize: vertical; min-height: 72px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: var(--medica-green-mid);
+        }
+        .modal-content.wide { width: 460px; margin: 6% auto; }
+        .modal-footer { display: flex; justify-content: space-between; margin-top: 20px; }
+        #toast { position: fixed; bottom: 24px; right: 24px; background: #1F5C38; color: white;
+                 padding: 12px 20px; border-radius: 8px; font-size: 14px; display: none;
+                 z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+        .risk-high { color: #991B1B; }
+        .risk-medium { color: #B45309; }
+        .risk-low { color: #166534; }
+        .section-badge { display: inline-block; background: var(--medica-green-light); color: var(--medica-green-text); font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
+    </style>
 </head>
 <body>
     <nav class="top-nav">
-        <div class="logo"><span class="box">M</span> Medica</div>
+        <div class="logo"><span class="box">+</span> Medica+</div>
         <div class="nav-links">
-            <a href="#" class="active">Pulpit lekarza</a>
-            <a href="#">Pacjenci</a>
-            <a href="#">Wizyty</a>
+            <a href="#" class="active" data-view="view-dashboard">Pulpit lekarza</a>
+            <a href="#" data-view="view-patients">Pacjenci</a>
+            <a href="#" data-view="view-visits-all">Wizyty</a>
         </div>
         <div class="user-profile">
-            <div class="avatar">L</div>
-            <span id="header-info"></span>
-            <button class="secondary" style="padding: 6px 12px; margin-left: 15px;" onclick="logout()">Wyloguj</button>
+            <div class="avatar" id="doc-avatar">L</div>
+            <span id="header-info" style="font-weight:500;"></span>
+            <button class="secondary" style="padding:6px 12px;" onclick="logout()">Wyloguj</button>
         </div>
     </nav>
 
     <div class="layout-wrapper">
         <aside class="sidebar">
-            <a class="sidebar-item active">Przegląd główny</a>
-            <a class="sidebar-item">Mój kalendarz</a>
-            <a class="sidebar-item">Zlecenia badań</a>
-            <a class="sidebar-item">Wiadomości</a>
+            <a href="#" class="sidebar-item active" data-view="view-dashboard">Przegląd główny</a>
+            <a href="#" class="sidebar-item" data-view="view-calendar">Mój kalendarz</a>
+            <a href="#" class="sidebar-item" data-view="view-orders">Zlecenia badań</a>
+            <a href="#" class="sidebar-item" data-view="view-messages">Wiadomości</a>
         </aside>
 
         <main class="main-content">
-            <div class="patient-header" style="margin-bottom: 30px;">
-                <div>
-                    <h2 style="margin:0 0 5px 0;">Witaj w portalu, Dr. <span id="doctor-name"></span></h2>
-                    <p style="margin:0; color:var(--medica-text-secondary); font-size:14px;">Masz dzisiaj zaplanowane wizyty. Poniżej znajduje się lista twoich pacjentów.</p>
+
+            <!-- ===== VIEW: Dashboard ===== -->
+            <div id="view-dashboard" class="view-section">
+                <div class="patient-header" style="margin-bottom:24px;">
+                    <div>
+                        <h2 style="margin:0 0 4px 0;">Witaj, Dr. <span id="doctor-name"></span></h2>
+                        <p style="margin:0; color:var(--medica-text-secondary); font-size:14px;">Przegląd twoich pacjentów i nadchodzących wizyt.</p>
+                    </div>
+                    <button onclick="openModal('modal-new-appt')">+ Umów wizytę</button>
+                </div>
+
+                <div class="metrics-grid" style="margin-bottom:24px;">
+                    <div class="metric-card">
+                        <div class="metric-label">Specjalizacja</div>
+                        <div id="doc-specialization" style="font-weight:500; margin-top:6px; font-size:14px; line-height:1.4;">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Gabinet</div>
+                        <div class="metric-val" id="doc-office" style="font-size:24px;">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Dyżur</div>
+                        <div id="doc-shift" style="font-weight:500; margin-top:6px; font-size:14px; line-height:1.4;">-</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Doświadczenie</div>
+                        <div class="metric-val" id="doc-experience" style="font-size:24px;">-</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="section-header">
+                            <h3>Nadchodzące wizyty</h3>
+                            <a href="#" data-view="view-visits-all" style="font-size:13px;">Wszystkie →</a>
+                        </div>
+                        <table class="data-table">
+                            <thead><tr><th>Data</th><th>Pacjent</th><th>Cel</th><th>Status</th></tr></thead>
+                            <tbody id="doc-appointments"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="card">
+                        <div class="section-header">
+                            <h3>Pacjenci kliniki</h3>
+                            <a href="#" data-view="view-patients" style="font-size:13px;">Wszyscy →</a>
+                        </div>
+                        <table class="data-table">
+                            <thead><tr><th>Pacjent</th><th>Diagnoza</th><th>Akcja</th></tr></thead>
+                            <tbody id="doc-patients"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="card" style="grid-column:span 2;">
+                        <div class="section-header">
+                            <h3>Zlecone wyniki badań</h3>
+                            <a href="#" data-view="view-orders" style="font-size:13px;">Zarządzaj →</a>
+                        </div>
+                        <table class="data-table">
+                            <thead><tr><th>Data</th><th>Pacjent</th><th>Badanie</th><th>Wynik</th></tr></thead>
+                            <tbody id="doc-results"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <div class="metrics-grid" style="margin-bottom:24px;">
-                <div class="metric-card">
-                    <div class="metric-label">Specjalizacja</div>
-                    <div class="metric-val" id="doc-specialization" style="font-size:20px;">-</div>
+            <!-- ===== VIEW: Pacjenci ===== -->
+            <div id="view-patients" class="view-section hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Wszyscy pacjenci kliniki <span class="section-badge" id="patients-count">0</span></h2>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Gabinet</div>
-                    <div class="metric-val" id="doc-office" style="font-size:20px;">-</div>
+                <div class="card" style="margin-bottom:16px; padding:16px;">
+                    <input type="text" id="patient-search" placeholder="Szukaj po nazwisku, PESEL lub diagnozie…" style="max-width:480px; display:inline-block; margin:0; width:100%;">
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Dyżur</div>
-                    <div class="metric-val" id="doc-shift" style="font-size:20px;">-</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Doświadczenie</div>
-                    <div class="metric-val" id="doc-experience" style="font-size:20px;">-</div>
-                </div>
-            </div>
-            
-            <div class="dashboard-grid">
-                <div class="card">
-                    <h3>Twoje dzisiejsze wizyty</h3>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Godzina / Data</th>
-                                <th>Pacjent</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="doc-appointments">
-                            <!-- Loaded via JS -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="card">
-                    <h3>Lista Pacjentów Kliniki</h3>
-                    <p style="font-size: 13px; color: var(--medica-text-secondary); margin-bottom: 15px;">Aby uzyskać pełen dostęp do karty, autoryzuj dostęp podając datę urodzenia.</p>
-                    
+                <div class="card" style="padding:0;">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Pacjent</th>
-                                <th>ID Pacjenta</th>
+                                <th>Wiek / Płeć</th>
+                                <th>Diagnoza</th>
+                                <th>Lekarz prowadzący</th>
+                                <th>Następna wizyta</th>
+                                <th>Ryzyko</th>
                                 <th>Akcja</th>
                             </tr>
                         </thead>
-                        <tbody id="doc-patients">
-                            <!-- Loaded via JS -->
-                        </tbody>
+                        <tbody id="patients-full-table"></tbody>
                     </table>
                 </div>
-                
-                <div class="card" style="grid-column: span 1;">
-                     <h3>Zlecone Wyniki Badań</h3>
-                     <ul id="doc-results" style="padding-left: 20px; line-height: 1.6; font-size: 14px;"></ul>
+            </div>
+
+            <!-- ===== VIEW: Wszystkie wizyty ===== -->
+            <div id="view-visits-all" class="view-section hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Zarządzanie wizytami</h2>
+                    <button onclick="openModal('modal-new-appt')">+ Umów wizytę</button>
+                </div>
+                <div class="metrics-grid" style="margin-bottom:24px;">
+                    <div class="metric-card"><div class="metric-val" id="vis-total">0</div><div class="metric-label">Wszystkich wizyt</div></div>
+                    <div class="metric-card"><div class="metric-val" id="vis-upcoming">0</div><div class="metric-label">Nadchodzące</div></div>
+                    <div class="metric-card"><div class="metric-val" id="vis-done">0</div><div class="metric-label">Zrealizowane</div></div>
+                    <div class="metric-card"><div class="metric-val" id="vis-patients">0</div><div class="metric-label">Unikalnych pacjentów</div></div>
+                </div>
+                <div class="card" style="padding:0;">
+                    <table class="data-table">
+                        <thead><tr><th>Data</th><th>Pacjent</th><th>Cel wizyty</th><th>Status</th><th>Akcja</th></tr></thead>
+                        <tbody id="all-visits-table"></tbody>
+                    </table>
                 </div>
             </div>
+
+            <!-- ===== VIEW: Kalendarz ===== -->
+            <div id="view-calendar" class="view-section hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Mój kalendarz wizyt</h2>
+                    <button onclick="openModal('modal-new-appt')">+ Dodaj wizytę</button>
+                </div>
+                <div id="calendar-content"></div>
+            </div>
+
+            <!-- ===== VIEW: Zlecenia badań ===== -->
+            <div id="view-orders" class="view-section hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Zlecenia badań</h2>
+                    <button onclick="openModal('modal-new-order')">+ Zleć badanie</button>
+                </div>
+                <div class="metrics-grid" style="margin-bottom:24px;">
+                    <div class="metric-card"><div class="metric-val" id="ord-total">0</div><div class="metric-label">Wszystkich zleceń</div></div>
+                    <div class="metric-card"><div class="metric-val" id="ord-patients">0</div><div class="metric-label">Pacjentów</div></div>
+                    <div class="metric-card"><div class="metric-val" id="ord-pending">0</div><div class="metric-label">Oczekuje na wynik</div></div>
+                    <div class="metric-card"><div class="metric-val" id="ord-done">0</div><div class="metric-label">Z wynikiem</div></div>
+                </div>
+                <div class="card" style="padding:0;">
+                    <table class="data-table">
+                        <thead><tr><th>Data</th><th>Pacjent</th><th>Badanie</th><th>Wynik</th></tr></thead>
+                        <tbody id="orders-full-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: Wiadomości ===== -->
+            <div id="view-messages" class="view-section hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Wiadomości</h2>
+                    <button onclick="showToast('Funkcja wiadomości wkrótce dostępna')">+ Nowa wiadomość</button>
+                </div>
+                <div class="card" style="text-align:center; padding:60px 40px;">
+                    <div style="font-size:48px; margin-bottom:16px;">✉️</div>
+                    <h3 style="margin:0 0 8px 0; font-weight:500;">Brak nowych wiadomości</h3>
+                    <p style="margin:0 0 24px 0; font-size:14px; color:var(--medica-text-secondary);">Skrzynka wiadomości wewnętrznych kliniki Medica+</p>
+                    <button onclick="showToast('Wiadomości – wkrótce dostępne')">Sprawdź wiadomości</button>
+                </div>
+            </div>
+
         </main>
     </div>
 
-    <!-- Modal for DOB verification -->
+    <!-- ===== Modal: Weryfikacja DOB ===== -->
     <div id="dob-modal" class="modal">
         <div class="modal-content">
             <h3 style="margin-top:0;">Weryfikacja tożsamości</h3>
-            <p id="verify-patient-name" style="font-weight: 500; font-size: 16px; margin: 15px 0 5px 0;"></p>
-            <p style="font-size: 13px; color: var(--medica-text-secondary); margin-bottom: 15px;">Podaj datę urodzenia pacjenta (RRRR-MM-DD), aby otworzyć kartę medyczną:</p>
-            <input type="date" id="verify-dob">
+            <p id="verify-patient-name" style="font-weight:500; font-size:16px; margin:12px 0 4px 0;"></p>
+            <p style="font-size:13px; color:var(--medica-text-secondary); margin-bottom:16px;">Podaj datę urodzenia pacjenta (RRRR-MM-DD), aby otworzyć kartę medyczną:</p>
+            <div class="form-group"><label>Data urodzenia</label><input type="date" id="verify-dob"></div>
             <p id="verify-error" class="error-msg hidden">Data urodzenia niezgodna!</p>
-            <div style="display:flex; justify-content: space-between; margin-top: 20px;">
-                <button class="secondary" onclick="closeModal()">Anuluj</button>
-                <button onclick="verifyAndOpen()">Autoryzuj</button>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('dob-modal')">Anuluj</button>
+                <button onclick="verifyAndOpen()">Autoryzuj i otwórz kartę</button>
             </div>
         </div>
     </div>
+
+    <!-- ===== Modal: Nowa wizyta ===== -->
+    <div id="modal-new-appt" class="modal">
+        <div class="modal-content wide">
+            <h3 style="margin-top:0;">Umów wizytę</h3>
+            <div class="form-group">
+                <label>Pacjent</label>
+                <select id="appt-patient">
+                    <option value="">-- Wybierz pacjenta --</option>
+                </select>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group">
+                    <label>Data wizyty</label>
+                    <input type="date" id="appt-date">
+                </div>
+                <div class="form-group">
+                    <label>Godzina</label>
+                    <input type="time" id="appt-time" value="10:00">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Cel wizyty</label>
+                <input type="text" id="appt-notes" placeholder="Np. Kontrola ciśnienia">
+            </div>
+            <p id="appt-error" class="error-msg hidden">Uzupełnij wszystkie pola.</p>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-new-appt')">Anuluj</button>
+                <button onclick="addAppointment()">Zapisz wizytę</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Modal: Zleć badanie ===== -->
+    <div id="modal-new-order" class="modal">
+        <div class="modal-content wide">
+            <h3 style="margin-top:0;">Zleć badanie</h3>
+            <div class="form-group">
+                <label>Pacjent</label>
+                <select id="order-patient">
+                    <option value="">-- Wybierz pacjenta --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nazwa badania</label>
+                <input type="text" id="order-name" placeholder="Np. Morfologia krwi, EKG, USG…">
+            </div>
+            <div class="form-group">
+                <label>Wynik (opcjonalnie – wpisz jeśli znany)</label>
+                <input type="text" id="order-result" placeholder="Pozostaw puste jeśli oczekuje na wynik">
+            </div>
+            <p id="order-error" class="error-msg hidden">Uzupełnij wymagane pola.</p>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-new-order')">Anuluj</button>
+                <button onclick="addOrder()">Zleć badanie</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"></div>
 
     <script src="js/data.js"></script>
     <script src="js/app.js"></script>
     <script>
         let selectedPatientId = null;
+        let currentDoctor = null;
 
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener('DOMContentLoaded', () => {
             const user = JSON.parse(localStorage.getItem('medicaUser'));
-            if (!user || user.role !== 'doctor') {
-                window.location.href = 'index.html';
-                return;
+            if (!user || user.role !== 'doctor') { window.location.href = 'index.html'; return; }
+            currentDoctor = user;
+
+            const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2);
+            document.getElementById('doc-avatar').textContent = initials;
+            document.getElementById('header-info').textContent = user.name;
+            document.getElementById('doctor-name').textContent = user.name.split(' ').slice(1).join(' ');
+            document.getElementById('doc-specialization').textContent = user.specialization || '-';
+            document.getElementById('doc-office').textContent = user.office || '-';
+            document.getElementById('doc-shift').textContent = user.shift || '-';
+            document.getElementById('doc-experience').textContent = user.experience || '-';
+
+            // Nav + sidebar view switching
+            document.querySelectorAll('[data-view]').forEach(el => {
+                el.addEventListener('click', e => { e.preventDefault(); switchView(el.getAttribute('data-view')); });
+            });
+
+            renderDashboard();
+            renderPatients();
+            renderVisits();
+            renderCalendar();
+            renderOrders();
+            populateSelects();
+
+            // Set today's date as default for appointment
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('appt-date').value = today;
+        });
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
+            const el = document.getElementById(viewId);
+            if (el) el.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-links a').forEach(a => {
+                a.classList.toggle('active', a.getAttribute('data-view') === viewId);
+            });
+            document.querySelectorAll('.sidebar-item').forEach(a => {
+                a.classList.toggle('active', a.getAttribute('data-view') === viewId);
+            });
+        }
+
+        function allPatients() { return clinicData.users.filter(u => u.role === 'patient'); }
+
+        function renderDashboard() {
+            const myAppts = clinicData.appointments.filter(a => a.doctorId === currentDoctor.id);
+            myAppts.sort((a, b) => a.date.localeCompare(b.date));
+
+            const apptBody = document.getElementById('doc-appointments');
+            apptBody.innerHTML = '';
+            const upcoming = myAppts.filter(a => a.status !== 'Zrealizowana');
+            if (upcoming.length === 0) {
+                apptBody.innerHTML = emptyRow(4, 'Brak nadchodzących wizyt');
+            } else {
+                upcoming.slice(0, 6).forEach(appt => {
+                    const pat = getPatientData(appt.patientId);
+                    apptBody.innerHTML += `<tr>
+                        <td style="white-space:nowrap;">${appt.date}</td>
+                        <td style="font-weight:500;">${pat ? pat.name : '—'}</td>
+                        <td style="color:var(--medica-text-secondary);">${appt.notes}</td>
+                        <td><span class="badge badge-green">${appt.status}</span></td>
+                    </tr>`;
+                });
             }
 
-            document.getElementById('header-info').textContent = user.name;
-            const docNameEl = document.getElementById('doctor-name');
-            if (docNameEl) docNameEl.textContent = user.name.split(' ').slice(1).join(' '); // just last name
-            document.getElementById('doc-specialization').textContent = user.specialization || 'Brak danych';
-            document.getElementById('doc-office').textContent = user.office || 'Brak danych';
-            document.getElementById('doc-shift').textContent = user.shift || 'Brak danych';
-            document.getElementById('doc-experience').textContent = user.experience || 'Brak danych';
+            const myResults = clinicData.testResults.filter(t => t.doctorId === currentDoctor.id);
+            const resBody = document.getElementById('doc-results');
+            resBody.innerHTML = '';
+            if (myResults.length === 0) {
+                resBody.innerHTML = emptyRow(4, 'Brak zleconych badań');
+            } else {
+                myResults.forEach(res => {
+                    const pat = getPatientData(res.patientId);
+                    resBody.innerHTML += `<tr>
+                        <td>${res.date}</td>
+                        <td style="font-weight:500;">${pat ? pat.name : '—'}</td>
+                        <td>${res.name}</td>
+                        <td style="color:var(--medica-text-secondary);">${res.result}</td>
+                    </tr>`;
+                });
+            }
 
-            // My Appointments
-            const myAppts = clinicData.appointments.filter(a => a.doctorId === user.id);
-            const apptBody = document.getElementById('doc-appointments');
-            myAppts.sort((a,b) => a.date.localeCompare(b.date));
+            const patients = allPatients();
+            const patBody = document.getElementById('doc-patients');
+            patBody.innerHTML = '';
+            patients.slice(0, 6).forEach(p => {
+                const tags = (p.tags || []).join(', ') || '—';
+                patBody.innerHTML += `<tr>
+                    <td style="font-weight:500;">${p.name}</td>
+                    <td style="color:var(--medica-text-secondary); font-size:13px;">${tags}</td>
+                    <td><button class="secondary" style="padding:4px 10px; font-size:13px;" onclick="openVerifyModal('${p.id}', '${p.name}')">Otwórz kartę</button></td>
+                </tr>`;
+            });
+        }
 
+        function renderPatients() {
+            const patients = allPatients();
+            document.getElementById('patients-count').textContent = patients.length;
+            const tbody = document.getElementById('patients-full-table');
+
+            function drawRows(list) {
+                tbody.innerHTML = '';
+                if (list.length === 0) { tbody.innerHTML = emptyRow(7, 'Brak wyników wyszukiwania'); return; }
+                list.forEach(p => {
+                    const riskClass = p.riskLevel === 'Wysokie' ? 'badge-red' : (p.riskLevel === 'Podwyższone' || p.riskLevel === 'Umiarkowane') ? 'badge-amber' : 'badge-green';
+                    const tags = (p.tags || []).join(', ') || '—';
+                    tbody.innerHTML += `<tr>
+                        <td>
+                            <div style="font-weight:500;">${p.name}</div>
+                            <div style="font-size:12px; color:var(--medica-text-secondary);">PESEL: ${p.pesel || '—'}</div>
+                        </td>
+                        <td>${p.age} lat / ${p.gender}</td>
+                        <td style="color:var(--medica-text-secondary);">${tags}</td>
+                        <td style="font-size:13px;">${p.doctorPrimary || '—'}</td>
+                        <td style="font-size:13px; white-space:nowrap;">${p.nextVisit || '—'}</td>
+                        <td><span class="badge ${riskClass}">${p.riskLevel || '—'}</span></td>
+                        <td><button class="secondary" style="padding:4px 10px; font-size:13px;" onclick="openVerifyModal('${p.id}', '${p.name}')">Otwórz kartę</button></td>
+                    </tr>`;
+                });
+            }
+
+            drawRows(patients);
+
+            document.getElementById('patient-search').addEventListener('input', function () {
+                const q = this.value.toLowerCase();
+                const filtered = patients.filter(p =>
+                    p.name.toLowerCase().includes(q) ||
+                    (p.pesel || '').includes(q) ||
+                    (p.tags || []).join(' ').toLowerCase().includes(q) ||
+                    (p.history || '').toLowerCase().includes(q)
+                );
+                drawRows(filtered);
+            });
+        }
+
+        function renderVisits() {
+            const myAppts = clinicData.appointments.filter(a => a.doctorId === currentDoctor.id);
+            myAppts.sort((a, b) => b.date.localeCompare(a.date));
+
+            document.getElementById('vis-total').textContent = myAppts.length;
+            document.getElementById('vis-upcoming').textContent = myAppts.filter(a => a.status !== 'Zrealizowana').length;
+            document.getElementById('vis-done').textContent = myAppts.filter(a => a.status === 'Zrealizowana').length;
+            document.getElementById('vis-patients').textContent = new Set(myAppts.map(a => a.patientId)).size;
+
+            const tbody = document.getElementById('all-visits-table');
+            tbody.innerHTML = '';
+            if (myAppts.length === 0) { tbody.innerHTML = emptyRow(5, 'Brak wizyt'); return; }
             myAppts.forEach(appt => {
                 const pat = getPatientData(appt.patientId);
                 const isDone = appt.status === 'Zrealizowana';
-                apptBody.innerHTML += `
-                    <tr>
-                        <td>${appt.date}</td>
-                        <td style="font-weight: 500;">${pat.name}</td>
-                        <td><span class="badge ${isDone ? 'badge-gray' : 'badge-green'}">${appt.status}</span></td>
-                    </tr>
-                `;
+                tbody.innerHTML += `<tr>
+                    <td style="white-space:nowrap;">${appt.date}</td>
+                    <td style="font-weight:500;">${pat ? pat.name : '—'}</td>
+                    <td>${appt.notes}</td>
+                    <td><span class="badge ${isDone ? 'badge-gray' : 'badge-green'}">${appt.status}</span></td>
+                    <td>${!isDone ? `<button class="secondary" style="padding:4px 10px; font-size:13px;" onclick="markDone('${appt.id}')">Zrealizuj</button>` : '<span style="color:var(--medica-text-secondary); font-size:13px;">—</span>'}</td>
+                </tr>`;
+            });
+        }
+
+        function renderCalendar() {
+            const myAppts = clinicData.appointments.filter(a => a.doctorId === currentDoctor.id);
+            myAppts.sort((a, b) => a.date.localeCompare(b.date));
+            const container = document.getElementById('calendar-content');
+            container.innerHTML = '';
+
+            const grouped = {};
+            myAppts.forEach(a => {
+                const d = a.date.split(' ')[0];
+                if (!grouped[d]) grouped[d] = [];
+                grouped[d].push(a);
             });
 
-            // Zlecone badania
-            const myResults = clinicData.testResults.filter(t => t.doctorId === user.id);
-            const resList = document.getElementById('doc-results');
-            if(myResults.length > 0) {
-                myResults.forEach(res => {
-                    const pat = getPatientData(res.patientId);
-                    resList.innerHTML += `<li style="margin-bottom: 8px;"><strong>${pat.name}</strong> - ${res.name}: <span style="color:var(--medica-text-secondary);">${res.result}</span></li>`;
+            if (Object.keys(grouped).length === 0) {
+                container.innerHTML = '<div class="card" style="text-align:center; color:var(--medica-text-secondary); padding:40px;">Brak wizyt w kalendarzu.</div>';
+                return;
+            }
+
+            Object.keys(grouped).sort().forEach(date => {
+                const appts = grouped[date];
+                const upcoming = appts.filter(a => a.status !== 'Zrealizowana').length;
+                let html = `<div class="card" style="margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <h3 style="margin:0; font-weight:500; font-size:15px;">${formatDate(date)}</h3>
+                        <span class="badge ${upcoming > 0 ? 'badge-green' : 'badge-gray'}">${upcoming > 0 ? upcoming + ' nadchodzące' : 'wszystkie zrealizowane'}</span>
+                    </div>`;
+                appts.forEach(a => {
+                    const pat = getPatientData(a.patientId);
+                    const isDone = a.status === 'Zrealizowana';
+                    html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--medica-border);">
+                        <div style="display:flex; align-items:center; gap:16px;">
+                            <span style="font-weight:600; color:var(--medica-green-mid); min-width:48px;">${a.date.split(' ')[1] || '—'}</span>
+                            <div>
+                                <div style="font-weight:500;">${pat ? pat.name : '—'}</div>
+                                <div style="font-size:13px; color:var(--medica-text-secondary);">${a.notes}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="badge ${isDone ? 'badge-gray' : 'badge-green'}">${a.status}</span>
+                            ${!isDone ? `<button class="secondary" style="padding:4px 10px; font-size:12px;" onclick="markDone('${a.id}')">Zrealizuj</button>` : ''}
+                        </div>
+                    </div>`;
                 });
-            } else {
-                resList.innerHTML = `<li style="color:var(--medica-text-secondary);">Brak zleconych wyników.</li>`;
-            }
-
-            // All Patients (with modal trigger)
-            const patBody = document.getElementById('doc-patients');
-            clinicData.patients.forEach(p => {
-                patBody.innerHTML += `
-                    <tr>
-                        <td style="font-weight: 500;">${p.name}</td>
-                        <td style="color:var(--medica-text-secondary);">${p.id}</td>
-                        <td><button class="secondary" style="padding: 6px 12px;" onclick="openVerifyModal('${p.id}', '${p.name}')">Otwórz kartę</button></td>
-                    </tr>
-                `;
+                html += '</div>';
+                container.innerHTML += html;
             });
+        }
 
-            // Update avatar initials
-            const avatar = document.querySelector('.avatar');
-            if (avatar) {
-                avatar.textContent = user.name.split(' ').map(n=>n[0]).join('').substring(0,2);
-            }
-        });
+        function renderOrders() {
+            const myResults = clinicData.testResults.filter(t => t.doctorId === currentDoctor.id);
+            const pending = myResults.filter(r => r.result === 'Oczekuje na wynik' || !r.result);
+            document.getElementById('ord-total').textContent = myResults.length;
+            document.getElementById('ord-patients').textContent = new Set(myResults.map(r => r.patientId)).size;
+            document.getElementById('ord-pending').textContent = pending.length;
+            document.getElementById('ord-done').textContent = myResults.length - pending.length;
+
+            const tbody = document.getElementById('orders-full-table');
+            tbody.innerHTML = '';
+            if (myResults.length === 0) { tbody.innerHTML = emptyRow(4, 'Brak zleconych badań'); return; }
+            myResults.sort((a, b) => b.date.localeCompare(a.date)).forEach(res => {
+                const pat = getPatientData(res.patientId);
+                const isPending = !res.result || res.result === 'Oczekuje na wynik';
+                tbody.innerHTML += `<tr>
+                    <td>${res.date}</td>
+                    <td style="font-weight:500;">${pat ? pat.name : '—'}</td>
+                    <td>${res.name}</td>
+                    <td style="${isPending ? 'color:var(--medica-text-secondary); font-style:italic;' : ''}">${res.result || 'Oczekuje na wynik'}</td>
+                </tr>`;
+            });
+        }
+
+        function populateSelects() {
+            const patients = allPatients();
+            ['appt-patient', 'order-patient'].forEach(id => {
+                const sel = document.getElementById(id);
+                patients.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.name;
+                    sel.appendChild(opt);
+                });
+            });
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'block'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         function openVerifyModal(pId, pName) {
             selectedPatientId = pId;
             document.getElementById('verify-patient-name').textContent = pName;
             document.getElementById('verify-error').classList.add('hidden');
             document.getElementById('verify-dob').value = '';
-            document.getElementById('dob-modal').style.display = 'block';
-        }
-
-        function closeModal() {
-            document.getElementById('dob-modal').style.display = 'none';
-            selectedPatientId = null;
+            openModal('dob-modal');
         }
 
         function verifyAndOpen() {
             const dateVal = document.getElementById('verify-dob').value;
             const pat = getPatientData(selectedPatientId);
-            
             if (pat && pat.dob === dateVal) {
-                closeModal();
-                window.location.href = `doctor_patient_view.html?patId=${selectedPatientId}`;
+                localStorage.setItem('activePatientId', selectedPatientId);
+                window.location.href = 'doctor_patient_view.html';
             } else {
                 document.getElementById('verify-error').classList.remove('hidden');
             }
         }
+
+        function addAppointment() {
+            const patId = document.getElementById('appt-patient').value;
+            const date = document.getElementById('appt-date').value;
+            const time = document.getElementById('appt-time').value;
+            const notes = document.getElementById('appt-notes').value.trim();
+            const errEl = document.getElementById('appt-error');
+
+            if (!patId || !date || !time || !notes) { errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+
+            clinicData.appointments.push({
+                id: 'a' + Date.now(),
+                patientId: patId,
+                doctorId: currentDoctor.id,
+                date: `${date} ${time}`,
+                status: 'Umówiona',
+                notes
+            });
+
+            closeModal('modal-new-appt');
+            document.getElementById('appt-patient').value = '';
+            document.getElementById('appt-notes').value = '';
+            renderDashboard(); renderVisits(); renderCalendar();
+            showToast('Wizyta została umówiona!');
+        }
+
+        function addOrder() {
+            const patId = document.getElementById('order-patient').value;
+            const name = document.getElementById('order-name').value.trim();
+            const result = document.getElementById('order-result').value.trim();
+            const errEl = document.getElementById('order-error');
+
+            if (!patId || !name) { errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+
+            clinicData.testResults.push({
+                id: 't' + Date.now(),
+                patientId: patId,
+                doctorId: currentDoctor.id,
+                date: new Date().toISOString().split('T')[0],
+                name,
+                result: result || 'Oczekuje na wynik'
+            });
+
+            closeModal('modal-new-order');
+            document.getElementById('order-patient').value = '';
+            document.getElementById('order-name').value = '';
+            document.getElementById('order-result').value = '';
+            renderDashboard(); renderOrders();
+            showToast('Badanie zostało zlecone!');
+        }
+
+        function markDone(apptId) {
+            const appt = clinicData.appointments.find(a => a.id === apptId);
+            if (appt) { appt.status = 'Zrealizowana'; renderDashboard(); renderVisits(); renderCalendar(); showToast('Wizyta oznaczona jako zrealizowana'); }
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr + 'T12:00:00');
+            const days = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
+            const months = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+            return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
+        function emptyRow(cols, msg) {
+            return `<tr><td colspan="${cols}" style="text-align:center; padding:20px; color:var(--medica-text-secondary);">${msg}</td></tr>`;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        window.addEventListener('click', e => {
+            ['dob-modal', 'modal-new-appt', 'modal-new-order'].forEach(id => {
+                const m = document.getElementById(id);
+                if (e.target === m) m.style.display = 'none';
+            });
+        });
     </script>
 </body>
 </html>

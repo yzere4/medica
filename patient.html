@@ -3,199 +3,600 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medica - Panel Pacjenta</title>
+    <title>Medica+ | Portal Pacjenta</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        select, textarea { font-family: inherit; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px 14px; border: 1px solid #D0CCC4;
+            border-radius: 8px; box-sizing: border-box; font-size: 14px;
+            font-family: inherit; background: white; color: var(--medica-text-primary); margin: 0;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--medica-green-mid); }
+        .modal-content.wide { width: 460px; margin: 6% auto; }
+        .modal-footer { display: flex; justify-content: space-between; margin-top: 20px; }
+        #toast { position: fixed; bottom: 24px; right: 24px; background: #1F5C38; color: white;
+                 padding: 12px 20px; border-radius: 8px; font-size: 14px; display: none;
+                 z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+        .info-row { display: flex; gap: 8px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--medica-border); font-size: 14px; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: var(--medica-text-secondary); min-width: 140px; font-size: 13px; }
+        .doc-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border: 1px solid var(--medica-border); border-radius: 10px; background: white; margin-bottom: 8px; }
+        .filter-btn { background: var(--medica-green-light); color: var(--medica-green-text); border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; }
+        .filter-btn.active { background: var(--medica-green-mid); color: white; }
+    </style>
 </head>
 <body>
     <nav class="top-nav">
-        <div class="logo"><span class="box">M</span> Medica</div>
+        <div class="logo"><span class="box">+</span> Medica+</div>
         <div class="nav-links">
-            <a href="#" class="active">Moje Zdrowie</a>
-            <a href="#">Wizyty i e-Rejestracja</a>
-            <a href="#">Wyniki Badań</a>
+            <a href="#" class="active" data-view="view-health">Moje Zdrowie</a>
+            <a href="#" data-view="view-appointments">Wizyty i e-Rejestracja</a>
+            <a href="#" data-view="view-results">Wyniki Badań</a>
         </div>
         <div class="user-profile">
-            <div class="avatar">P</div>
-            <span id="header-info"></span>
-            <button class="secondary" style="padding: 6px 12px; margin-left: 15px;" onclick="logout()">Wyloguj</button>
+            <div class="avatar" id="pat-avatar">P</div>
+            <span id="header-info" style="font-weight:500;"></span>
+            <button class="secondary" style="padding:6px 12px;" onclick="logout()">Wyloguj</button>
         </div>
     </nav>
 
     <div class="layout-wrapper">
         <aside class="sidebar">
-            <a class="sidebar-item active">Przegląd główny</a>
-            <a class="sidebar-item">Moje leki</a>
-            <a class="sidebar-item">Historia skierowań</a>
-            <a class="sidebar-item">Dokumentacja</a>
+            <a href="#" class="sidebar-item active" data-view="view-health">Przegląd główny</a>
+            <a href="#" class="sidebar-item" data-view="view-meds">Moje leki</a>
+            <a href="#" class="sidebar-item" data-view="view-referrals">Historia skierowań</a>
+            <a href="#" class="sidebar-item" data-view="view-docs">Dokumentacja</a>
         </aside>
 
         <main class="main-content">
-            <div class="patient-header">
-                <div class="ph-left">
-                    <div class="ph-avatar" id="big-avatar" style="background:var(--medica-green-light); color:var(--medica-green-text);">JA</div>
-                    <div class="ph-info">
-                        <h2 id="patient-welcome">Witaj, </h2>
-                        <div class="ph-meta">
-                            <span>PESEL: <span id="pat-pesel">----</span></span> &bull; 
-                            <span>Urodzony: <span id="pat-dob">----</span></span>
+
+            <!-- ===== VIEW: Moje Zdrowie ===== -->
+            <div id="view-health" class="view-section">
+                <!-- Nagłówek pacjenta -->
+                <div class="patient-header" style="margin-bottom:24px;">
+                    <div class="ph-left">
+                        <div class="ph-avatar" id="big-avatar" style="background:var(--medica-green-light); color:var(--medica-green-text); font-size:20px;">JA</div>
+                        <div class="ph-info">
+                            <h2 id="patient-welcome" style="margin:0 0 6px 0;">Witaj</h2>
+                            <div class="ph-meta">
+                                PESEL: <strong id="pat-pesel">—</strong> &bull;
+                                Urodzony: <strong id="pat-dob">—</strong> &bull;
+                                Wiek: <strong id="pat-age">—</strong>
+                            </div>
+                            <div class="ph-meta">
+                                📞 <span id="pat-phone">—</span> &bull;
+                                ✉️ <span id="pat-email">—</span>
+                            </div>
+                            <div class="ph-tags" style="margin-top:10px;">
+                                <span class="badge badge-green" id="pat-status-badge">Aktywny pacjent</span>
+                            </div>
                         </div>
-                        <div class="ph-tags">
-                            <span class="badge badge-green">Aktywny plan opieki</span>
-                            <span class="badge badge-blue">Portal pacjenta</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:13px; color:var(--medica-text-secondary); margin-bottom:4px;">Lekarz prowadzący</div>
+                        <div style="font-weight:500;" id="pat-doctor">—</div>
+                        <div style="font-size:13px; color:var(--medica-text-secondary); margin-top:12px; margin-bottom:4px;">Następna wizyta</div>
+                        <div style="font-weight:500; color:var(--medica-green-mid);" id="pat-next-visit">—</div>
+                    </div>
+                </div>
+
+                <div class="metrics-grid" style="margin-bottom:24px;">
+                    <div class="metric-card">
+                        <div class="metric-label">Grupa krwi</div>
+                        <div class="metric-val" id="pat-blood" style="font-size:28px;">—</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Ubezpieczenie</div>
+                        <div id="pat-insurance" style="font-weight:500; margin-top:8px; font-size:14px; line-height:1.5;">—</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Poziom ryzyka</div>
+                        <div class="metric-val" id="pat-risk" style="font-size:20px; margin-top:6px;">—</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Kontakt alarmowy</div>
+                        <div id="pat-emergency" style="font-weight:500; margin-top:8px; font-size:13px; line-height:1.5;">—</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="section-header">
+                            <h3>Historia chorób i rozpoznania</h3>
+                        </div>
+                        <div id="icd-list"></div>
+
+                        <div class="section-header" style="margin-top:24px;">
+                            <h3>Notatki od lekarzy</h3>
+                        </div>
+                        <div style="background:var(--medica-green-light); border-left:4px solid var(--medica-green-mid); padding:14px; border-radius:0 8px 8px 0; font-size:14px;">
+                            <span id="pat-notes">Brak notatek</span>
+                        </div>
+
+                        <div class="section-header" style="margin-top:24px;">
+                            <h3>Plan opieki</h3>
+                        </div>
+                        <div style="background:#F0F9FF; border-left:4px solid #3B82F6; padding:14px; border-radius:0 8px 8px 0; font-size:14px;">
+                            <span id="pat-care-plan">Brak planu opieki</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="section-header">
+                            <h3>Parametry życiowe</h3>
+                            <span style="font-size:13px; color:var(--medica-text-secondary);" id="vitals-date-pat"></span>
+                        </div>
+                        <div class="vitals-grid" id="vitals-pat"></div>
+
+                        <div class="section-header" style="margin-top:24px;">
+                            <h3>Alergie i uczulenia</h3>
+                        </div>
+                        <div id="allergies-pat">
+                            <div style="color:var(--medica-text-secondary); font-size:14px;">Brak wpisów</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="metrics-grid" style="margin-bottom:24px;">
-                <div class="metric-card">
-                    <div class="metric-label">Grupa krwi</div>
-                    <div class="metric-val" id="pat-blood">-</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Ubezpieczenie</div>
-                    <div class="metric-val" id="pat-insurance">-</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Następna wizyta</div>
-                    <div class="metric-val" id="pat-next-visit" style="font-size:20px;">-</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Kontakt alarmowy</div>
-                    <div class="metric-val" id="pat-emergency" style="font-size:20px;">-</div>
-                </div>
-            </div>
-
-            <div class="dashboard-grid">
-                <!-- Informacje medyczne -->
-                <div class="card">
-                    <div class="section-header">
-                        <h3>Ostatnie diagnozy / Historia chorób</h3>
-                    </div>
-                    <div style="font-size: 14px; background: var(--medica-green-light); padding: 15px; border-radius: 8px; border-left: 4px solid var(--medica-green-mid);">
-                        <p style="margin: 0 0 10px 0;"><strong>Aktualne rozpoznania:</strong> <span id="pat-history">Brak</span></p>
-                        <p style="margin: 0; color: var(--medica-text-secondary);"><strong style="color:var(--medica-text-primary);">Notatki od lekarzy:</strong> <span id="pat-notes">Brak</span></p>
-                    </div>
-                    
-                    <div class="section-header" style="margin-top: 25px;">
-                        <h3>Aktualnie przyjmowane leki</h3>
-                    </div>
-                    <div class="allergy-row" style="background: white; border: 1px solid var(--medica-border); color: var(--medica-text-primary);">
-                        💊 <span id="pat-meds">Brak zdefiniowanych leków stałych</span>
-                    </div>
-                </div>
-                
-                <!-- Dokumenty i wyniki -->
-                <div class="card">
-                    <div class="section-header">
-                        <h3>Wyniki Badań (Ostatnie)</h3>
-                    </div>
-                    <ul id="pat-results" style="padding-left: 20px; line-height: 1.6; font-size: 14px; margin-bottom: 25px;"></ul>
-                    
-                    <div class="section-header">
-                        <h3>Wgrana Dokumentacja e-Zdrowie</h3>
-                    </div>
-                    <ul id="pat-docs" style="padding-left: 20px; line-height: 1.6; font-size: 14px;"></ul>
+            <!-- ===== VIEW: Wizyty i e-Rejestracja ===== -->
+            <div id="view-appointments" class="view-section hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Wizyty i e-Rejestracja</h2>
+                    <button onclick="openModal('modal-book-appt')">+ Umów wizytę</button>
                 </div>
 
-                <!-- Wizyty na dole całej długości -->
-                <div class="card" style="grid-column: span 2;">
-                    <div class="section-header">
-                        <h3>Twoje Wizyty i Rejestracje</h3>
-                        <button style="padding: 6px 12px;">+ Umów wizytę</button>
+                <div class="metrics-grid" style="margin-bottom:24px;">
+                    <div class="metric-card"><div class="metric-val" id="appt-total">0</div><div class="metric-label">Wszystkich wizyt</div></div>
+                    <div class="metric-card"><div class="metric-val" id="appt-upcoming">0</div><div class="metric-label">Nadchodzące</div></div>
+                    <div class="metric-card"><div class="metric-val" id="appt-done">0</div><div class="metric-label">Zrealizowane</div></div>
+                    <div class="metric-card"><div class="metric-val" id="appt-doctors">0</div><div class="metric-label">Różnych lekarzy</div></div>
+                </div>
+
+                <div class="card" style="margin-bottom:16px; padding:14px 16px;">
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="filter-btn active" onclick="filterAppts(this, 'all')">Wszystkie</button>
+                        <button class="filter-btn" onclick="filterAppts(this, 'upcoming')">Nadchodzące</button>
+                        <button class="filter-btn" onclick="filterAppts(this, 'done')">Zrealizowane</button>
                     </div>
+                </div>
+
+                <div class="card" style="padding:0;">
                     <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Data wizyty</th>
-                                <th>Lekarz Prowadzący</th>
-                                <th>Cel Wizyty</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pat-appointments">
-                            <!-- Loaded via JS -->
-                        </tbody>
+                        <thead><tr><th>Data wizyty</th><th>Lekarz</th><th>Cel wizyty</th><th>Status</th><th>Akcja</th></tr></thead>
+                        <tbody id="pat-appointments"></tbody>
                     </table>
                 </div>
             </div>
+
+            <!-- ===== VIEW: Wyniki Badań ===== -->
+            <div id="view-results" class="view-section hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Wyniki badań</h2>
+                </div>
+                <div class="card" style="padding:0;">
+                    <table class="data-table">
+                        <thead><tr><th>Data</th><th>Badanie</th><th>Wynik</th><th>Zlecił</th></tr></thead>
+                        <tbody id="pat-results-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: Moje leki ===== -->
+            <div id="view-meds" class="view-section hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Moje leki</h2>
+                </div>
+                <div class="metrics-grid" style="margin-bottom:24px;">
+                    <div class="metric-card"><div class="metric-val" id="meds-active">0</div><div class="metric-label">Aktywne leki</div></div>
+                    <div class="metric-card"><div class="metric-val" id="meds-upcoming-rx">0</div><div class="metric-label">Recepty do odnowienia</div></div>
+                </div>
+                <div class="card" style="padding:0;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Lek</th><th>Dawka</th><th>Częstotliwość</th>
+                                <th>Od dnia</th><th>Następna recepta</th><th>Przepisał</th><th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="meds-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: Historia skierowań ===== -->
+            <div id="view-referrals" class="view-section hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Historia skierowań</h2>
+                </div>
+                <div id="referrals-list"></div>
+            </div>
+
+            <!-- ===== VIEW: Dokumentacja ===== -->
+            <div id="view-docs" class="view-section hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Moja dokumentacja medyczna</h2>
+                </div>
+                <div id="docs-list"></div>
+            </div>
+
         </main>
     </div>
+
+    <!-- ===== Modal: Umów wizytę ===== -->
+    <div id="modal-book-appt" class="modal">
+        <div class="modal-content wide">
+            <h3 style="margin-top:0;">Umów wizytę</h3>
+            <div class="form-group">
+                <label>Lekarz</label>
+                <select id="book-doctor">
+                    <option value="">-- Wybierz lekarza --</option>
+                </select>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group">
+                    <label>Data wizyty</label>
+                    <input type="date" id="book-date">
+                </div>
+                <div class="form-group">
+                    <label>Godzina</label>
+                    <input type="time" id="book-time" value="10:00">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Cel wizyty</label>
+                <input type="text" id="book-notes" placeholder="Np. Konsultacja, odnowienie recepty…">
+            </div>
+            <p id="book-error" class="error-msg hidden">Uzupełnij wszystkie pola.</p>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-book-appt')">Anuluj</button>
+                <button onclick="bookAppointment()">Umów wizytę</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Modal: Szczegóły wizyty ===== -->
+    <div id="modal-appt-detail" class="modal">
+        <div class="modal-content wide">
+            <h3 style="margin-top:0;">Szczegóły wizyty</h3>
+            <div id="appt-detail-body"></div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-appt-detail')">Zamknij</button>
+                <button id="cancel-appt-btn" style="background:#DC2626;">Odwołaj wizytę</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"></div>
 
     <script src="js/data.js"></script>
     <script src="js/app.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
+        let currentPatient = null;
+        let currentApptFilter = 'all';
+        let cancelApptId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
             const user = JSON.parse(localStorage.getItem('medicaUser'));
-            if (!user || user.role !== 'patient') {
-                window.location.href = 'index.html';
+            if (!user || user.role !== 'patient') { window.location.href = 'index.html'; return; }
+            currentPatient = clinicData.users.find(u => u.id === user.id) || user;
+
+            const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2);
+            document.getElementById('pat-avatar').textContent = initials;
+            document.getElementById('big-avatar').textContent = initials;
+            document.getElementById('header-info').textContent = user.name;
+
+            // Nav + sidebar switching
+            document.querySelectorAll('[data-view]').forEach(el => {
+                el.addEventListener('click', e => { e.preventDefault(); switchView(el.getAttribute('data-view')); });
+            });
+
+            renderHealth();
+            renderAppointments();
+            renderResults();
+            renderMeds();
+            renderReferrals();
+            renderDocs();
+            populateDoctorSelect();
+
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('book-date').value = today;
+        });
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
+            const el = document.getElementById(viewId);
+            if (el) el.classList.remove('hidden');
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.toggle('active', a.getAttribute('data-view') === viewId));
+            document.querySelectorAll('.sidebar-item').forEach(a => a.classList.toggle('active', a.getAttribute('data-view') === viewId));
+        }
+
+        function renderHealth() {
+            const p = currentPatient;
+            document.getElementById('patient-welcome').textContent = 'Witaj, ' + p.name;
+            document.getElementById('pat-pesel').textContent = p.pesel || '—';
+            document.getElementById('pat-dob').textContent = p.dob || '—';
+            document.getElementById('pat-age').textContent = p.age ? p.age + ' lat' : '—';
+            document.getElementById('pat-phone').textContent = p.phone || '—';
+            document.getElementById('pat-email').textContent = p.email || '—';
+            document.getElementById('pat-blood').textContent = p.bloodType || '—';
+            document.getElementById('pat-insurance').textContent = p.insurance || '—';
+            document.getElementById('pat-emergency').textContent = p.emergencyContact || '—';
+            document.getElementById('pat-next-visit').textContent = p.nextVisit || 'Brak';
+            document.getElementById('pat-doctor').textContent = p.doctorPrimary || '—';
+            document.getElementById('pat-notes').textContent = p.notes || 'Brak notatek';
+            document.getElementById('pat-care-plan').textContent = p.carePlan || 'Brak planu opieki';
+
+            const riskEl = document.getElementById('pat-risk');
+            riskEl.textContent = p.riskLevel || '—';
+            riskEl.style.color = p.riskLevel === 'Wysokie' ? '#DC2626' : p.riskLevel === 'Podwyższone' || p.riskLevel === 'Umiarkowane' ? '#D97706' : '#16A34A';
+
+            const statusBadge = document.getElementById('pat-status-badge');
+            if (p.status === 'Wymaga uwagi') { statusBadge.className = 'badge badge-amber'; }
+            statusBadge.textContent = p.status || 'Aktywny pacjent';
+
+            // ICD history
+            const icdEl = document.getElementById('icd-list');
+            if (p.icdHistory && p.icdHistory.length > 0) {
+                icdEl.innerHTML = p.icdHistory.map(h => {
+                    const cls = h.status === 'Aktywna' ? 'badge-amber' : h.status === 'Przewlekła' ? 'badge-blue' : 'badge-gray';
+                    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--medica-border);">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span class="badge-icd">${h.code}</span>
+                            <div>
+                                <div style="font-size:14px;">${h.name}</div>
+                                <div style="font-size:12px; color:var(--medica-text-secondary);">${h.date} · ${h.doctor}</div>
+                            </div>
+                        </div>
+                        <span class="badge ${cls}">${h.status}</span>
+                    </div>`;
+                }).join('');
+            } else {
+                icdEl.innerHTML = '<div style="color:var(--medica-text-secondary); font-size:14px;">Brak rozpoznań w historii</div>';
+            }
+
+            // Vitals
+            if (p.vitals) {
+                const v = p.vitals;
+                document.getElementById('vitals-date-pat').textContent = 'Ostatni pomiar: ' + v.lastMeasured;
+                document.getElementById('vitals-pat').innerHTML = `
+                    <div class="vital-item"><div class="vital-dot dot-${v.pressureStatus}"></div><div class="vital-info"><div class="val">${v.pressure}</div><div class="unit">Ciśnienie (mmHg)</div></div></div>
+                    <div class="vital-item"><div class="vital-dot dot-${v.glucoseStatus}"></div><div class="vital-info"><div class="val">${v.glucose}</div><div class="unit">Glukoza (mmol/L)</div></div></div>
+                    <div class="vital-item"><div class="vital-dot dot-${v.hrStatus}"></div><div class="vital-info"><div class="val">${v.hr}</div><div class="unit">Tętno (bpm)</div></div></div>
+                    <div class="vital-item"><div class="vital-dot dot-${v.bmiStatus}"></div><div class="vital-info"><div class="val">${v.bmi}</div><div class="unit">BMI (kg/m²)</div></div></div>`;
+            }
+
+            // Allergies
+            const algEl = document.getElementById('allergies-pat');
+            if (p.allergies && p.allergies.length > 0) {
+                algEl.innerHTML = p.allergies.map(al => `<div class="allergy-row"><span>⚠️</span> ${al.name}</div>`).join('');
+            } else {
+                algEl.innerHTML = '<div style="color:var(--medica-text-secondary); font-size:14px; padding:8px 0;">Brak zarejestrowanych alergii</div>';
+            }
+        }
+
+        function renderAppointments(filter) {
+            if (filter) currentApptFilter = filter;
+            const all = clinicData.appointments.filter(a => a.patientId === currentPatient.id);
+            all.sort((a, b) => b.date.localeCompare(a.date));
+
+            document.getElementById('appt-total').textContent = all.length;
+            document.getElementById('appt-upcoming').textContent = all.filter(a => a.status !== 'Zrealizowana').length;
+            document.getElementById('appt-done').textContent = all.filter(a => a.status === 'Zrealizowana').length;
+            document.getElementById('appt-doctors').textContent = new Set(all.map(a => a.doctorId)).size;
+
+            let filtered = all;
+            if (currentApptFilter === 'upcoming') filtered = all.filter(a => a.status !== 'Zrealizowana');
+            if (currentApptFilter === 'done') filtered = all.filter(a => a.status === 'Zrealizowana');
+
+            const tbody = document.getElementById('pat-appointments');
+            tbody.innerHTML = '';
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--medica-text-secondary);">Brak wizyt</td></tr>`;
+                return;
+            }
+            filtered.forEach(appt => {
+                const doc = clinicData.users.find(u => u.id === appt.doctorId);
+                const isDone = appt.status === 'Zrealizowana';
+                tbody.innerHTML += `<tr>
+                    <td style="white-space:nowrap; font-weight:500;">${appt.date}</td>
+                    <td>${doc ? doc.name : '—'}</td>
+                    <td style="color:var(--medica-text-secondary);">${appt.notes}</td>
+                    <td><span class="badge ${isDone ? 'badge-gray' : 'badge-green'}">${appt.status}</span></td>
+                    <td>${!isDone ? `<button class="secondary" style="padding:4px 10px; font-size:13px;" onclick="showApptDetail('${appt.id}')">Szczegóły</button>` : '—'}</td>
+                </tr>`;
+            });
+        }
+
+        function filterAppts(btn, type) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderAppointments(type);
+        }
+
+        function renderResults() {
+            const results = clinicData.testResults.filter(t => t.patientId === currentPatient.id);
+            results.sort((a, b) => b.date.localeCompare(a.date));
+            const tbody = document.getElementById('pat-results-table');
+            tbody.innerHTML = '';
+            if (results.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--medica-text-secondary);">Brak zarchiwizowanych wyników badań</td></tr>`;
+                return;
+            }
+            results.forEach(res => {
+                const doc = clinicData.users.find(u => u.id === res.doctorId);
+                tbody.innerHTML += `<tr>
+                    <td>${res.date}</td>
+                    <td style="font-weight:500; color:var(--medica-green-mid);">${res.name}</td>
+                    <td>${res.result}</td>
+                    <td style="font-size:13px; color:var(--medica-text-secondary);">${doc ? doc.name : '—'}</td>
+                </tr>`;
+            });
+        }
+
+        function renderMeds() {
+            const meds = currentPatient.medicationsList || [];
+            const active = meds.filter(m => m.status === 'Aktywny').length;
+            const upcoming = meds.filter(m => m.nextRx && m.nextRx !== '-').length;
+            document.getElementById('meds-active').textContent = active;
+            document.getElementById('meds-upcoming-rx').textContent = upcoming;
+
+            const tbody = document.getElementById('meds-table');
+            tbody.innerHTML = '';
+            if (meds.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--medica-text-secondary);">Brak przepisanych leków</td></tr>`;
+                return;
+            }
+            meds.forEach(m => {
+                tbody.innerHTML += `<tr>
+                    <td style="font-weight:500;">💊 ${m.name}</td>
+                    <td>${m.dose}</td>
+                    <td>${m.freq}</td>
+                    <td>${m.since}</td>
+                    <td>${m.nextRx || '—'}</td>
+                    <td style="font-size:13px;">${m.doctor}</td>
+                    <td><span class="badge ${m.status === 'Aktywny' ? 'badge-green' : 'badge-gray'}">${m.status}</span></td>
+                </tr>`;
+            });
+        }
+
+        function renderReferrals() {
+            const container = document.getElementById('referrals-list');
+            // Generate from appointments (treat past consultations as potential referrals)
+            const pastAppts = clinicData.appointments
+                .filter(a => a.patientId === currentPatient.id && a.status === 'Zrealizowana')
+                .slice(0, 3);
+
+            if (pastAppts.length === 0) {
+                container.innerHTML = `<div class="card" style="text-align:center; padding:40px; color:var(--medica-text-secondary);">
+                    <div style="font-size:40px; margin-bottom:12px;">📋</div>
+                    <p>Brak historii skierowań</p>
+                </div>`;
                 return;
             }
 
-            document.getElementById('header-info').textContent = user.name;
-            document.getElementById('patient-welcome').textContent = `Witaj, ${user.name}`;
-            
-            // Set initials
-            const inits = user.name.split(' ').map(n=>n[0]).join('').substring(0,2);
-            document.querySelector('.avatar').textContent = inits;
-            document.getElementById('big-avatar').textContent = inits;
+            const mockReferrals = pastAppts.map((a, i) => {
+                const doc = clinicData.users.find(u => u.id === a.doctorId);
+                const specialists = ['Kardiologia', 'Endokrynologia', 'Neurologia'];
+                return {
+                    date: a.date.split(' ')[0],
+                    to: specialists[i % specialists.length],
+                    reason: a.notes,
+                    doctor: doc ? doc.name : '—',
+                    status: i === 0 ? 'Nowe' : 'Zrealizowane'
+                };
+            });
 
-            document.getElementById('pat-pesel').textContent = user.id.replace('PAT', '980102') + '123';
-            document.getElementById('pat-dob').textContent = user.dob || "Brak danych";
-            document.getElementById('pat-blood').textContent = user.bloodType || 'Brak danych';
-            document.getElementById('pat-insurance').textContent = user.insurance || 'Brak danych';
-            document.getElementById('pat-next-visit').textContent = user.nextVisit || 'Brak';
-            document.getElementById('pat-emergency').textContent = user.emergencyContact ? user.emergencyContact.split(',')[0] : 'Brak';
-            
-            // Info
-            document.getElementById('pat-history').textContent = user.history;
-            document.getElementById('pat-meds').textContent = user.meds || 'Brak danych lekowych';
-            document.getElementById('pat-notes').textContent = user.notes;
+            container.innerHTML = mockReferrals.map(r => `
+                <div class="card" style="margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <div style="font-weight:500; font-size:15px; margin-bottom:4px;">Skierowanie do: ${r.to}</div>
+                            <div style="font-size:13px; color:var(--medica-text-secondary); margin-bottom:6px;">${r.date} · Wystawił: ${r.doctor}</div>
+                            <div style="font-size:14px;">${r.reason}</div>
+                        </div>
+                        <span class="badge ${r.status === 'Nowe' ? 'badge-green' : 'badge-gray'}">${r.status}</span>
+                    </div>
+                </div>`).join('');
+        }
 
-            // Docs
-            const docsList = document.getElementById('pat-docs');
-            if(user.docs && user.docs.length > 0) {
-                user.docs.forEach(doc => {
-                    docsList.innerHTML += `<li><a href="#" style="text-decoration:none;">📋 ${doc}</a> (Plik PDF)</li>`;
-                });
-            } else {
-                docsList.innerHTML = `<li style="color:var(--medica-text-secondary);">Brak zdigitalizowanych dokumentów</li>`;
+        function renderDocs() {
+            const container = document.getElementById('docs-list');
+            const docs = currentPatient.docs || [];
+            if (docs.length === 0) {
+                container.innerHTML = `<div class="card" style="text-align:center; padding:40px; color:var(--medica-text-secondary);">
+                    <div style="font-size:40px; margin-bottom:12px;">📁</div>
+                    <p>Brak zdigitalizowanych dokumentów</p>
+                </div>`;
+                return;
             }
+            container.innerHTML = docs.map((doc, i) => `
+                <div class="doc-item">
+                    <div>
+                        <div style="font-weight:500;">📄 ${doc}</div>
+                        <div style="font-size:13px; color:var(--medica-text-secondary);">Dokument ${i + 1} · ${currentPatient.name}</div>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="badge badge-blue">PDF</span>
+                        <button class="secondary" style="padding:4px 10px; font-size:13px;" onclick="showToast('Pobieranie: ${doc}')">Pobierz</button>
+                    </div>
+                </div>`).join('');
+        }
 
-            // Results
-            const userResults = clinicData.testResults.filter(t => t.patientId === user.id);
-            const resultsList = document.getElementById('pat-results');
-            if(userResults.length > 0) {
-                userResults.forEach(res => {
-                    const doctor = getDoctorData(res.doctorId);
-                    resultsList.innerHTML += `<li style="margin-bottom:8px;"><strong>${res.date} - <span style="color:var(--medica-green-mid);">${res.name}</span>:</strong> ${res.result} <br><small style="color:var(--medica-text-secondary);">Zlecił: ${doctor.name}</small></li>`;
-                });
-            } else {
-                resultsList.innerHTML = `<li style="color:var(--medica-text-secondary);">Brak zarchiwizowanych wyników badań laboratoryjnych</li>`;
+        function populateDoctorSelect() {
+            const doctors = clinicData.users.filter(u => u.role === 'doctor');
+            const sel = document.getElementById('book-doctor');
+            doctors.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = `${d.name} – ${d.specialization}`;
+                sel.appendChild(opt);
+            });
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'block'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function bookAppointment() {
+            const docId = document.getElementById('book-doctor').value;
+            const date = document.getElementById('book-date').value;
+            const time = document.getElementById('book-time').value;
+            const notes = document.getElementById('book-notes').value.trim();
+            const errEl = document.getElementById('book-error');
+            if (!docId || !date || !time || !notes) { errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+
+            const newAppt = { id: 'a' + Date.now(), patientId: currentPatient.id, doctorId: docId, date: `${date} ${time}`, status: 'Umówiona', notes };
+            clinicData.appointments.push(newAppt);
+            currentPatient.nextVisit = `${date} ${time}`;
+
+            closeModal('modal-book-appt');
+            document.getElementById('book-doctor').value = '';
+            document.getElementById('book-notes').value = '';
+            renderAppointments(); renderHealth();
+            showToast('Wizyta została pomyślnie umówiona!');
+        }
+
+        function showApptDetail(apptId) {
+            const appt = clinicData.appointments.find(a => a.id === apptId);
+            if (!appt) return;
+            const doc = clinicData.users.find(u => u.id === appt.doctorId);
+            cancelApptId = apptId;
+            document.getElementById('appt-detail-body').innerHTML = `
+                <div class="info-row"><span class="info-label">Data wizyty</span><span>${appt.date}</span></div>
+                <div class="info-row"><span class="info-label">Lekarz</span><span style="font-weight:500;">${doc ? doc.name : '—'}</span></div>
+                <div class="info-row"><span class="info-label">Specjalizacja</span><span>${doc ? doc.specialization : '—'}</span></div>
+                <div class="info-row"><span class="info-label">Gabinet</span><span>${doc ? doc.office : '—'}</span></div>
+                <div class="info-row"><span class="info-label">Cel wizyty</span><span>${appt.notes}</span></div>
+                <div class="info-row"><span class="info-label">Status</span><span class="badge badge-green">${appt.status}</span></div>`;
+            document.getElementById('cancel-appt-btn').onclick = () => cancelAppt(apptId);
+            openModal('modal-appt-detail');
+        }
+
+        function cancelAppt(apptId) {
+            const appt = clinicData.appointments.find(a => a.id === apptId);
+            if (appt) {
+                appt.status = 'Odwołana';
+                closeModal('modal-appt-detail');
+                renderAppointments();
+                showToast('Wizyta została odwołana');
             }
+        }
 
-            // Appointments
-            const userAppts = clinicData.appointments.filter(a => a.patientId === user.id);
-            const apptBody = document.getElementById('pat-appointments');
-            
-            // Sort by date descending approx 
-            userAppts.sort((a,b) => b.date.localeCompare(a.date));
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
 
-            if (userAppts.length === 0) {
-                apptBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--medica-text-secondary); padding: 20px;">Brak historii wizyt / Brak nadchodzących rezerwacji</td></tr>`;
-            }
-
-            userAppts.forEach(appt => {
-                const doctor = getDoctorData(appt.doctorId);
-                const isDone = appt.status === 'Zrealizowana';
-                apptBody.innerHTML += `
-                    <tr>
-                        <td>${appt.date}</td>
-                        <td style="font-weight:500;">${doctor.name}</td>
-                        <td style="color:var(--medica-text-secondary);">${appt.reason || 'Konsultacja medyczna'}</td>
-                        <td><span class="badge ${isDone ? 'badge-gray' : 'badge-green'}">${appt.status}</span></td>
-                    </tr>
-                `;
+        window.addEventListener('click', e => {
+            ['modal-book-appt', 'modal-appt-detail'].forEach(id => {
+                const m = document.getElementById(id);
+                if (e.target === m) m.style.display = 'none';
             });
         });
     </script>

@@ -5,23 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medica+ | Profil Pacjenta</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        select, textarea { font-family: inherit; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px 14px; border: 1px solid #D0CCC4;
+            border-radius: 8px; box-sizing: border-box; font-size: 14px;
+            font-family: inherit; background: white; color: var(--medica-text-primary); margin: 0;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--medica-green-mid); }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-content.wide { width: 480px; margin: 5% auto; }
+        .modal-footer { display: flex; justify-content: space-between; margin-top: 20px; }
+        #toast { position: fixed; bottom: 24px; right: 24px; background: #1F5C38; color: white;
+                 padding: 12px 20px; border-radius: 8px; font-size: 14px; display: none;
+                 z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+        .tab-content.hidden { display: none !important; }
+        .doc-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border: 1px solid var(--medica-border); border-radius: 10px; background: white; margin-bottom: 8px; }
+        .note-card { padding: 14px 16px; border: 1px solid var(--medica-border); border-radius: 10px; background: white; margin-bottom: 8px; }
+        .vital-edit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    </style>
 </head>
 <body>
     <div class="top-nav">
-        <div class="logo">
-            <span class="box">+</span> Medica+
-        </div>
+        <div class="logo"><span class="box">+</span> Medica+</div>
         <div class="nav-links">
             <a href="doctor.html">Pulpit</a>
-            <a href="#" class="active">Pacjenci</a>
-            <a href="#">Wizyty</a>
-            <a href="#">Wyniki</a>
-            <a href="#">Dokumenty</a>
-            <a href="#">Ustawienia</a>
+            <a href="doctor.html" data-view-nav="patients">Pacjenci</a>
+            <a href="#" class="active">Karta pacjenta</a>
         </div>
         <div class="user-profile">
-            <span id="doc-name-nav">Dr Jan Kowalski</span>
+            <span id="doc-name-nav" style="font-size:14px; font-weight:500;"></span>
             <div class="avatar" id="doc-avatar-nav">JK</div>
+            <button class="secondary" style="padding:6px 12px;" onclick="logout()">Wyloguj</button>
         </div>
     </div>
 
@@ -37,80 +55,51 @@
         </div>
 
         <div class="main-content">
-            <!-- Patient Header (Shared across all tabs) -->
+            <!-- Nagłówek pacjenta -->
             <div class="patient-header">
                 <div class="ph-left">
-                    <div class="ph-avatar" id="pat-initials">AW</div>
+                    <div class="ph-avatar" id="pat-initials" style="background:var(--medica-green-light); color:var(--medica-green-text);">—</div>
                     <div class="ph-info">
-                        <h2 id="pat-name">Anna Wiśniewska</h2>
+                        <h2 id="pat-name" style="margin:0 0 6px 0;">—</h2>
                         <div class="ph-meta">
-                            PESEL: <span id="pat-pesel"></span> &middot; 
-                            Data ur.: <span id="pat-dob"></span> &middot; 
-                            Wiek: <span id="pat-age"></span> &middot; 
-                            Płeć: <span id="pat-gender"></span>
+                            PESEL: <strong id="pat-pesel">—</strong> &middot;
+                            Data ur.: <strong id="pat-dob">—</strong> &middot;
+                            Wiek: <strong id="pat-age">—</strong> &middot;
+                            Płeć: <strong id="pat-gender">—</strong>
                         </div>
                         <div class="ph-meta">
-                            📞 <span id="pat-phone"></span> &middot; 
-                            ✉️ <span id="pat-email"></span> &middot; 
-                            🏠 <span id="pat-address"></span>
+                            📞 <span id="pat-phone">—</span> &middot;
+                            ✉️ <span id="pat-email">—</span> &middot;
+                            🏠 <span id="pat-address">—</span>
                         </div>
-                        <div class="ph-tags" id="pat-tags-container">
-                            <!-- Populated via JS -->
-                        </div>
+                        <div class="ph-tags" id="pat-tags-container"></div>
                     </div>
                 </div>
                 <div class="ph-right">
-                    <button style="width:100%;">+ Nowa wizyta</button>
-                    <button class="secondary" style="width:100%; border-color:var(--medica-border); border-radius:6px; background:#fff; text-align:left; color:var(--medica-text-primary);">📋 Skierowanie</button>
-                    <button class="secondary" style="width:100%; border-color:var(--medica-border); border-radius:6px; background:#fff; text-align:left; color:var(--medica-text-primary);">💊 Recepta</button>
+                    <button style="width:100%;" onclick="openModal('modal-new-visit')">+ Nowa wizyta</button>
+                    <button class="secondary" style="width:100%; text-align:left;" onclick="openModal('modal-referral')">📋 Skierowanie</button>
+                    <button class="secondary" style="width:100%; text-align:left;" onclick="openModal('modal-prescription')">💊 Recepta</button>
                 </div>
             </div>
 
             <!-- TAB: Dane ogólne -->
             <div id="tab-overview" class="tab-content">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
-                    <!-- Vitals -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
                     <div class="card" style="margin:0;">
                         <div class="section-header">
                             <h3>Parametry życiowe</h3>
-                            <span style="font-size:13px; color:var(--medica-text-secondary);" id="vitals-date"></span>
-                        </div>
-                        <div class="vitals-grid">
-                            <div class="vital-item">
-                                <div class="vital-dot" id="dot-bp"></div>
-                                <div class="vital-info">
-                                    <div class="val" id="val-bp"></div>
-                                    <div class="unit">Ciśnienie (mmHg)</div>
-                                </div>
-                            </div>
-                            <div class="vital-item">
-                                <div class="vital-dot" id="dot-glucose"></div>
-                                <div class="vital-info">
-                                    <div class="val" id="val-glucose"></div>
-                                    <div class="unit">Glukoza (mmol/L)</div>
-                                </div>
-                            </div>
-                            <div class="vital-item">
-                                <div class="vital-dot" id="dot-hr"></div>
-                                <div class="vital-info">
-                                    <div class="val" id="val-hr"></div>
-                                    <div class="unit">Tętno (bpm)</div>
-                                </div>
-                            </div>
-                            <div class="vital-item">
-                                <div class="vital-dot" id="dot-bmi"></div>
-                                <div class="vital-info">
-                                    <div class="val" id="val-bmi"></div>
-                                    <div class="unit">BMI (kg/m²)</div>
-                                </div>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-size:13px; color:var(--medica-text-secondary);" id="vitals-date">—</span>
+                                <button style="padding:4px 10px; font-size:12px;" onclick="openModal('modal-update-vitals')">Zaktualizuj</button>
                             </div>
                         </div>
+                        <div class="vitals-grid" id="vitals-grid"></div>
                     </div>
 
-                    <!-- Allergies -->
                     <div class="card" style="margin:0;">
                         <div class="section-header">
                             <h3>Alergie i uczulenia</h3>
+                            <button style="padding:4px 10px; font-size:12px;" onclick="openModal('modal-add-allergy')">+ Dodaj</button>
                         </div>
                         <div id="allergies-container">
                             <div style="color:var(--medica-text-secondary); font-size:14px;">Brak wpisów</div>
@@ -121,184 +110,426 @@
                 <div class="card" style="margin-top:24px;">
                     <div class="section-header">
                         <h3>Aktualne leki</h3>
-                        <a href="#" onclick="switchTab('tab-meds')">+ Dodaj lek</a>
+                        <a href="#" onclick="switchTab('tab-meds'); return false;" style="font-size:13px;">+ Dodaj lek →</a>
                     </div>
                     <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Nazwa leku</th>
-                                <th>Dawka</th>
-                                <th>Częstotliwość</th>
-                                <th>Od dnia</th>
-                                <th>Przepisał</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="overview-meds-table">
-                            <!-- via js -->
-                        </tbody>
+                        <thead><tr><th>Nazwa leku</th><th>Dawka</th><th>Częstotliwość</th><th>Od dnia</th><th>Przepisał</th><th>Status</th></tr></thead>
+                        <tbody id="overview-meds-table"></tbody>
                     </table>
                 </div>
 
                 <div class="card" style="margin-top:24px;">
                     <div class="section-header">
                         <h3>Ostatnie wizyty</h3>
-                        <a href="#" onclick="switchTab('tab-visits')">Zobacz wszystkie &rarr;</a>
+                        <a href="#" onclick="switchTab('tab-visits'); return false;" style="font-size:13px;">Zobacz wszystkie →</a>
                     </div>
                     <table class="data-table">
-                        <tbody id="overview-visits-table">
-                            <!-- via js -->
-                        </tbody>
+                        <tbody id="overview-visits-table"></tbody>
                     </table>
                 </div>
             </div>
 
             <!-- TAB: Historia chorób -->
             <div id="tab-history" class="tab-content hidden">
-                <div class="section-header">
-                    <h2>Historia chorób</h2>
-                    <button style="border-radius:6px;">+ Dodaj diagnozę</button>
+                <div class="section-header" style="margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Historia chorób</h2>
+                    <button onclick="openModal('modal-add-diagnosis')">+ Dodaj diagnozę</button>
                 </div>
                 <div class="card" style="padding:0;">
                     <table class="data-table">
-                        <tbody id="history-table">
-                            <!-- JS populated -->
-                        </tbody>
+                        <thead><tr><th>Kod ICD</th><th>Rozpoznanie</th><th>Data</th><th>Lekarz</th><th>Status</th></tr></thead>
+                        <tbody id="history-table"></tbody>
                     </table>
                 </div>
             </div>
 
             <!-- TAB: Leki -->
             <div id="tab-meds" class="tab-content hidden">
-                <h2 style="font-weight:500; margin-bottom:20px; margin-top:0;">Leki i farmakoterapia</h2>
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-val" id="mc-active-meds">0</div>
-                        <div class="metric-label">Aktywne leki</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-val">0</div>
-                        <div class="metric-label">Zakończone</div>
-                    </div>
-                    <div class="metric-card" style="color:#10B981;">
-                        <div class="metric-val">0</div>
-                        <div class="metric-label" style="color:var(--medica-text-secondary)">Interakcje</div>
-                    </div>
-                    <div class="metric-card" style="color:#F59E0B;">
-                        <div class="metric-val">1</div>
-                        <div class="metric-label" style="color:var(--medica-text-secondary)">Recepty (30 dni)</div>
-                    </div>
+                <div class="section-header" style="margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Leki i farmakoterapia</h2>
+                    <button onclick="openModal('modal-add-med')">+ Dodaj lek</button>
                 </div>
-
+                <div class="metrics-grid" style="margin-bottom:24px;">
+                    <div class="metric-card"><div class="metric-val" id="mc-active-meds">0</div><div class="metric-label">Aktywne leki</div></div>
+                    <div class="metric-card"><div class="metric-val" id="mc-inactive-meds">0</div><div class="metric-label">Zakończone</div></div>
+                    <div class="metric-card"><div class="metric-val" style="color:#10B981;">0</div><div class="metric-label">Interakcje</div></div>
+                    <div class="metric-card"><div class="metric-val" id="mc-rx" style="color:#F59E0B;">0</div><div class="metric-label">Recepty (30 dni)</div></div>
+                </div>
                 <div class="card" style="padding:0;">
                     <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Lek</th>
-                                <th>Dawka</th>
-                                <th>Częstotliwość</th>
-                                <th>Od dnia</th>
-                                <th>Następna recepta</th>
-                                <th>Przepisał</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="meds-full-table">
-                            <!-- JS populated -->
-                        </tbody>
+                        <thead><tr><th>Lek</th><th>Dawka</th><th>Częstotliwość</th><th>Od dnia</th><th>Następna recepta</th><th>Przepisał</th><th>Status</th><th></th></tr></thead>
+                        <tbody id="meds-full-table"></tbody>
                     </table>
                 </div>
             </div>
 
             <!-- TAB: Wyniki badań -->
             <div id="tab-tests" class="tab-content hidden">
-                <div class="section-header">
-                    <h2>Wyniki badań laboratoryjnych i obrazowych</h2>
-                    <button style="border-radius:6px;">+ Zleć badanie</button>
+                <div class="section-header" style="margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Wyniki badań</h2>
+                    <button onclick="openModal('modal-add-test')">+ Zleć badanie</button>
                 </div>
                 <div class="card" style="padding:0;">
                     <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Badanie</th>
-                                <th>Wynik</th>
-                                <th>Zlecił</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tests-table">
-                        </tbody>
+                        <thead><tr><th>Data</th><th>Badanie</th><th>Wynik</th><th>Zlecił</th></tr></thead>
+                        <tbody id="tests-table"></tbody>
                     </table>
                 </div>
             </div>
 
             <!-- TAB: Wizyty -->
             <div id="tab-visits" class="tab-content hidden">
-                <div class="section-header">
-                    <h2>Historia wizyt i konsultacji</h2>
-                    <button style="border-radius:6px;">+ Nowa wizyta</button>
+                <div class="section-header" style="margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Historia wizyt</h2>
+                    <button onclick="openModal('modal-new-visit')">+ Nowa wizyta</button>
                 </div>
                 <div class="card" style="padding:0;">
                     <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Lekarz</th>
-                                <th>Powód</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="visits-table">
-                        </tbody>
+                        <thead><tr><th>Data</th><th>Lekarz</th><th>Powód</th><th>Status</th><th>Akcja</th></tr></thead>
+                        <tbody id="visits-table"></tbody>
                     </table>
                 </div>
             </div>
 
             <!-- TAB: Dokumenty -->
             <div id="tab-docs" class="tab-content hidden">
-                <div class="section-header">
-                    <h2>Dokumenty pacjenta</h2>
-                    <button style="border-radius:6px;">+ Dodaj dokument</button>
+                <div class="section-header" style="margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Dokumenty pacjenta</h2>
+                    <button onclick="openModal('modal-add-doc')">+ Dodaj dokument</button>
                 </div>
-                <div class="card">
-                    <div id="docs-container" style="display:grid; gap:12px;"></div>
-                </div>
+                <div id="docs-container"></div>
             </div>
 
             <!-- TAB: Notatki -->
             <div id="tab-notes" class="tab-content hidden">
-                <div class="section-header">
-                    <h2>Notatki z konsultacji</h2>
-                    <button style="border-radius:6px;">+ Nowa notatka</button>
+                <div class="section-header" style="margin-bottom:20px;">
+                    <h2 style="margin:0; font-weight:500;">Notatki kliniczne</h2>
+                    <button onclick="openModal('modal-add-note')">+ Nowa notatka</button>
                 </div>
-                <div class="card" style="display:grid; gap:16px;">
-                    <div id="patient-summary-card" class="card" style="margin:0; background:var(--medica-green-light); border-color:#d7e9dd;"></div>
-                    <div id="notes-container" style="display:grid; gap:12px;"></div>
-                </div>
+                <div id="patient-summary-card" class="card" style="background:var(--medica-green-light); border-color:#d7e9dd; margin-bottom:16px;"></div>
+                <div id="notes-container"></div>
             </div>
-
         </div>
     </div>
 
+    <!-- ===== MODALS ===== -->
+
+    <!-- Nowa wizyta -->
+    <div id="modal-new-visit" class="modal">
+        <div class="modal-content wide">
+            <h3 style="margin-top:0;">Zarejestruj wizytę</h3>
+            <div class="form-row">
+                <div class="form-group"><label>Data</label><input type="date" id="visit-date"></div>
+                <div class="form-group"><label>Godzina</label><input type="time" id="visit-time" value="10:00"></div>
+            </div>
+            <div class="form-group">
+                <label>Lekarz prowadzący</label>
+                <select id="visit-doctor"><option value="">-- Wybierz lekarza --</option></select>
+            </div>
+            <div class="form-group">
+                <label>Cel / Powód wizyty</label>
+                <input type="text" id="visit-notes" placeholder="Np. Kontrola, badanie kontrolne…">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="visit-status">
+                    <option value="Umówiona">Umówiona</option>
+                    <option value="Zrealizowana">Zrealizowana</option>
+                </select>
+            </div>
+            <p id="visit-error" class="error-msg hidden">Uzupełnij wszystkie wymagane pola.</p>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-new-visit')">Anuluj</button>
+                <button onclick="addVisit()">Zapisz wizytę</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skierowanie -->
+    <div id="modal-referral" class="modal">
+        <div class="modal-content wide">
+            <h3 style="margin-top:0;">Wystaw skierowanie</h3>
+            <div class="form-group">
+                <label>Specjalista / Poradnia</label>
+                <input type="text" id="ref-specialist" placeholder="Np. Kardiologia, Neurologia, RTG…">
+            </div>
+            <div class="form-group">
+                <label>Powód skierowania</label>
+                <textarea id="ref-reason" placeholder="Opis wskazań medycznych…"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Pilność</label>
+                <select id="ref-urgency">
+                    <option value="Planowe">Planowe</option>
+                    <option value="Pilne">Pilne</option>
+                    <option value="Cito">Cito (natychmiastowe)</option>
+                </select>
+            </div>
+            <p id="ref-error" class="error-msg hidden">Uzupełnij wymagane pola.</p>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-referral')">Anuluj</button>
+                <button onclick="addReferral()">Wystaw skierowanie</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recepta -->
+    <div id="modal-prescription" class="modal">
+        <div class="modal-content wide">
+            <h3 style="margin-top:0;">Wystaw receptę</h3>
+            <div class="form-row">
+                <div class="form-group"><label>Nazwa leku</label><input type="text" id="rx-name" placeholder="Np. Lisinopril"></div>
+                <div class="form-group"><label>Dawka</label><input type="text" id="rx-dose" placeholder="Np. 10mg"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Częstotliwość</label>
+                    <select id="rx-freq">
+                        <option>1x dziennie</option>
+                        <option>2x dziennie</option>
+                        <option>3x dziennie</option>
+                        <option>Doraźnie</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Ilość opakowań</label><input type="number" id="rx-qty" value="1" min="1" max="12"></div>
+            </div>
+            <div class="form-group">
+                <label>Dodatkowe wskazówki</label>
+                <input type="text" id="rx-notes" placeholder="Np. Przyjmować rano na czczo">
+            </div>
+            <p id="rx-error" class="error-msg hidden">Podaj nazwę leku i dawkę.</p>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-prescription')">Anuluj</button>
+                <button onclick="addPrescription()">Wystaw receptę</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dodaj diagnozę -->
+    <div id="modal-add-diagnosis" class="modal">
+        <div class="modal-content wide">
+            <h3 style="margin-top:0;">Dodaj diagnozę</h3>
+            <div class="form-row">
+                <div class="form-group"><label>Kod ICD-10</label><input type="text" id="diag-code" placeholder="Np. I10, E11…"></div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="diag-status">
+                        <option value="Aktywna">Aktywna</option>
+                        <option value="Przewlekła">Przewlekła</option>
+                        <option value="Zakończona">Zakończona</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group"><label>Nazwa rozpoznania</label><input type="text" id="diag-name" placeholder="Np. Nadciśnienie tętnicze"></div>
+            <p id="diag-error" class="error-msg hidden">Uzupełnij kod ICD i nazwę rozpoznania.</p>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-add-diagnosis')">Anuluj</button>
+                <button onclick="addDiagnosis()">Zapisz diagnozę</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dodaj lek -->
+    <div id="modal-add-med" class="modal">
+        <div class="modal-content wide">
+            <h3 style="margin-top:0;">Dodaj lek</h3>
+            <div class="form-row">
+                <div class="form-group"><label>Nazwa leku</label><input type="text" id="med-name" placeholder="Np. Amlodipina"></div>
+                <div class="form-group"><label>Dawka</label><input type="text" id="med-dose" placeholder="Np. 5mg"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Częstotliwość</label>
+                    <select id="med-freq">
+                        <option>1x dziennie</option>
+                        <option>2x dziennie</option>
+                        <option>3x dziennie</option>
+                        <option>1x rano</option>
+                        <option>1x wieczorem</option>
+                        <option>Doraźnie</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Data od</label><input type="date" id="med-since"></div>
+            </div>
+            <div class="form-group"><label>Data następnej recepty</label><input type="date" id="med-next-rx"></div>
+            <p id="med-error" class="error-msg hidden">Podaj nazwę leku i dawkę.</p>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-add-med')">Anuluj</button>
+                <button onclick="addMedication()">Dodaj lek</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zleć badanie -->
+    <div id="modal-add-test" class="modal">
+        <div class="modal-content wide">
+            <h3 style="margin-top:0;">Zleć badanie</h3>
+            <div class="form-group"><label>Nazwa badania</label><input type="text" id="test-name" placeholder="Np. Morfologia, EKG, USG jamy brzusznej…"></div>
+            <div class="form-group"><label>Wynik (opcjonalnie)</label><input type="text" id="test-result" placeholder="Pozostaw puste jeśli oczekuje na wynik"></div>
+            <p id="test-error" class="error-msg hidden">Podaj nazwę badania.</p>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-add-test')">Anuluj</button>
+                <button onclick="addTest()">Zleć badanie</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dodaj dokument -->
+    <div id="modal-add-doc" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0;">Dodaj dokument</h3>
+            <div class="form-group"><label>Nazwa dokumentu</label><input type="text" id="doc-name" placeholder="Np. Wypis szpitalny 2026.pdf"></div>
+            <div class="form-group">
+                <label>Typ dokumentu</label>
+                <select id="doc-type">
+                    <option>PDF</option>
+                    <option>Wynik badania</option>
+                    <option>Skierowanie</option>
+                    <option>Karta wypisu</option>
+                    <option>Inne</option>
+                </select>
+            </div>
+            <p id="doc-error" class="error-msg hidden">Podaj nazwę dokumentu.</p>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-add-doc')">Anuluj</button>
+                <button onclick="addDocument()">Dodaj dokument</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nowa notatka -->
+    <div id="modal-add-note" class="modal">
+        <div class="modal-content wide">
+            <h3 style="margin-top:0;">Nowa notatka kliniczna</h3>
+            <div class="form-group"><label>Tytuł notatki</label><input type="text" id="note-title" placeholder="Np. Obserwacje z wizyty, Zalecenia…"></div>
+            <div class="form-group"><label>Treść notatki</label><textarea id="note-text" placeholder="Opis stanu pacjenta, zalecenia, obserwacje…"></textarea></div>
+            <p id="note-error" class="error-msg hidden">Uzupełnij tytuł i treść.</p>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-add-note')">Anuluj</button>
+                <button onclick="addNote()">Zapisz notatkę</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zaktualizuj parametry życiowe -->
+    <div id="modal-update-vitals" class="modal">
+        <div class="modal-content wide">
+            <h3 style="margin-top:0;">Zaktualizuj parametry życiowe</h3>
+            <div class="vital-edit-row">
+                <div class="form-group"><label>Ciśnienie (mmHg)</label><input type="text" id="v-pressure" placeholder="Np. 130/85"></div>
+                <div class="form-group"><label>Glukoza (mmol/L)</label><input type="text" id="v-glucose" placeholder="Np. 5.6"></div>
+            </div>
+            <div class="vital-edit-row">
+                <div class="form-group"><label>Tętno (bpm)</label><input type="number" id="v-hr" placeholder="Np. 72"></div>
+                <div class="form-group"><label>BMI (kg/m²)</label><input type="text" id="v-bmi" placeholder="Np. 24.5"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-update-vitals')">Anuluj</button>
+                <button onclick="updateVitals()">Zapisz pomiary</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dodaj alergię -->
+    <div id="modal-add-allergy" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0;">Dodaj alergię</h3>
+            <div class="form-group">
+                <label>Alergen</label>
+                <input type="text" id="allergy-name" placeholder="Np. Penicylina, Pyłki, Roztocza…">
+            </div>
+            <p id="allergy-error" class="error-msg hidden">Podaj nazwę alergenu.</p>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal('modal-add-allergy')">Anuluj</button>
+                <button onclick="addAllergy()">Dodaj alergię</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"></div>
+
     <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
     <script>
         let currentPatient = null;
-        
-        document.addEventListener("DOMContentLoaded", () => {
+        let currentDoctor = null;
+        let patientNotes = [];
+
+        const MODAL_IDS = ['modal-new-visit','modal-referral','modal-prescription','modal-add-diagnosis',
+            'modal-add-med','modal-add-test','modal-add-doc','modal-add-note','modal-update-vitals','modal-add-allergy'];
+
+        document.addEventListener('DOMContentLoaded', () => {
             const user = JSON.parse(localStorage.getItem('medicaUser'));
-            const activePatId = localStorage.getItem('activePatientId');
-            
-            if (!user || user.role !== 'doctor' || !activePatId) {
-                window.location.href = 'index.html';
-                return;
+            if (!user || user.role !== 'doctor') { window.location.href = 'index.html'; return; }
+            currentDoctor = user;
+
+            // Support both localStorage and URL param
+            const urlParams = new URLSearchParams(window.location.search);
+            const patIdFromUrl = urlParams.get('patId');
+            const activePatId = patIdFromUrl || localStorage.getItem('activePatientId');
+            if (patIdFromUrl) localStorage.setItem('activePatientId', patIdFromUrl);
+
+            if (!activePatId) { window.location.href = 'doctor.html'; return; }
+
+            currentPatient = clinicData.users.find(u => u.id === activePatId && u.role === 'patient');
+            if (!currentPatient) { window.location.href = 'doctor.html'; return; }
+
+            // Ensure notes array exists
+            if (!currentPatient._notes) {
+                currentPatient._notes = [
+                    { title: 'Notatka bieżąca', text: currentPatient.notes || 'Brak notatki', meta: 'Dane pacjenta', date: new Date().toLocaleDateString('pl-PL') },
+                    { title: 'Zalecenia', text: currentPatient.carePlan || 'Brak zaleceń', meta: 'Plan monitorowania', date: new Date().toLocaleDateString('pl-PL') }
+                ];
             }
 
-            // Load header Doctor info
+            // Header
             document.getElementById('doc-name-nav').textContent = user.name;
-            document.getElementById('doc-avatar-nav').textContent = user.initials;
+            document.getElementById('doc-avatar-nav').textContent = (user.initials || user.name.split(' ').map(n=>n[0]).join('').substring(0,2));
 
-            // Load Patient Data
-            currentPatient = clinicData.users.find(u => u.id === activePatId && u.role === 'patient');
+            // Populate doctor selects
+            const doctors = clinicData.users.filter(u => u.role === 'doctor');
+            ['visit-doctor'].forEach(id => {
+                const sel = document.getElementById(id);
+                doctors.forEach(d => { const o = document.createElement('option'); o.value = d.id; o.textContent = d.name + (d.id === user.id ? ' (Ty)' : ''); sel.appendChild(o); });
+                sel.value = user.id;
+            });
+
+            // Set today's date defaults
+            const today = new Date().toISOString().split('T')[0];
+            ['visit-date','med-since','med-next-rx'].forEach(id => { const el = document.getElementById(id); if(el) el.value = today; });
+
+            // Tabs
+            document.querySelectorAll('.sidebar-item[data-tab]').forEach(item => {
+                item.addEventListener('click', e => { e.preventDefault(); switchTab(item.getAttribute('data-tab')); });
+            });
+
+            // Nav link: Pacjenci goes back to doctor.html patients view
+            document.querySelector('[data-view-nav="patients"]')?.addEventListener('click', e => {
+                e.preventDefault();
+                window.location.href = 'doctor.html';
+            });
+
+            // Close modals on backdrop click
+            window.addEventListener('click', e => {
+                MODAL_IDS.forEach(id => { const m = document.getElementById(id); if(e.target === m) m.style.display = 'none'; });
+            });
+
+            populateAll();
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.add('hidden'));
+            document.querySelectorAll('.sidebar-item').forEach(si => si.classList.remove('active'));
+            document.getElementById(tabId).classList.remove('hidden');
+            const link = document.querySelector(`.sidebar-item[data-tab="${tabId}"]`);
+            if (link) link.classList.add('active');
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'block'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function populateAll() {
             populatePatientHeader();
             populateOverview();
             populateHistory();
@@ -307,292 +538,424 @@
             populateVisits();
             populateDocs();
             populateNotes();
-
-            // Tabs setup
-            document.querySelectorAll('.sidebar-item').forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if(!item.hasAttribute('data-tab')) return;
-                    switchTab(item.getAttribute('data-tab'));
-                });
-            });
-        });
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.add('hidden'));
-            document.querySelectorAll('.sidebar-item').forEach(si => si.classList.remove('active'));
-            
-            document.getElementById(tabId).classList.remove('hidden');
-            const activeLink = document.querySelector(`.sidebar-item[data-tab="${tabId}"]`);
-            if(activeLink) activeLink.classList.add('active');
         }
 
         function populatePatientHeader() {
             const p = currentPatient;
-            document.getElementById('pat-name').innerHTML = p.name;
-            document.getElementById('pat-initials').innerHTML = p.initials;
-            document.getElementById('pat-pesel').innerHTML = p.pesel || 'Brak danych';
-            document.getElementById('pat-dob').innerHTML = p.dob;
-            document.getElementById('pat-age').innerHTML = p.age + ' lat';
-            document.getElementById('pat-gender').innerHTML = p.gender || 'Nie podano';
-            document.getElementById('pat-phone').innerHTML = p.phone || 'Brak';
-            document.getElementById('pat-email').innerHTML = p.email || 'Brak';
-            document.getElementById('pat-address').innerHTML = p.address || 'Brak';
+            document.getElementById('pat-name').textContent = p.name;
+            document.getElementById('pat-initials').textContent = p.initials || p.name.split(' ').map(n=>n[0]).join('').substring(0,2);
+            document.getElementById('pat-pesel').textContent = p.pesel || '—';
+            document.getElementById('pat-dob').textContent = p.dob || '—';
+            document.getElementById('pat-age').textContent = p.age ? p.age + ' lat' : '—';
+            document.getElementById('pat-gender').textContent = p.gender || '—';
+            document.getElementById('pat-phone').textContent = p.phone || '—';
+            document.getElementById('pat-email').textContent = p.email || '—';
+            document.getElementById('pat-address').textContent = p.address || '—';
 
-            // Tags
-            let tagsHtml = `<span class="badge badge-green">${p.status || 'Aktywny pacjent'}</span>`;
-            if (p.tags) {
-                p.tags.forEach((tag, idx) => {
-                    const color = idx % 2 === 0 ? 'badge-amber' : 'badge-red';
-                    tagsHtml += `<span class="badge ${color}">${tag}</span>`;
-                });
+            let tags = `<span class="badge badge-green">${p.status || 'Aktywny pacjent'}</span>`;
+            if (p.riskLevel) {
+                const rc = p.riskLevel === 'Wysokie' ? 'badge-red' : p.riskLevel === 'Podwyższone' || p.riskLevel === 'Umiarkowane' ? 'badge-amber' : 'badge-green';
+                tags += ` <span class="badge ${rc}">Ryzyko: ${p.riskLevel}</span>`;
             }
-            document.getElementById('pat-tags-container').innerHTML = tagsHtml;
+            (p.tags || []).forEach((tag, i) => { tags += ` <span class="badge ${i % 2 === 0 ? 'badge-amber' : 'badge-blue'}">${tag}</span>`; });
+            document.getElementById('pat-tags-container').innerHTML = tags;
         }
 
         function populateOverview() {
             const p = currentPatient;
             // Vitals
-            if(p.vitals) {
-                document.getElementById('vitals-date').textContent = "Ostatni pomiar: " + p.vitals.lastMeasured;
-                document.getElementById('val-bp').textContent = p.vitals.pressure;
-                document.getElementById('val-glucose').textContent = p.vitals.glucose;
-                document.getElementById('val-hr').textContent = p.vitals.hr;
-                document.getElementById('val-bmi').textContent = p.vitals.bmi;
-
-                document.getElementById('dot-bp').className = `vital-dot dot-${p.vitals.pressureStatus}`;
-                document.getElementById('dot-glucose').className = `vital-dot dot-${p.vitals.glucoseStatus}`;
-                document.getElementById('dot-hr').className = `vital-dot dot-${p.vitals.hrStatus}`;
-                document.getElementById('dot-bmi').className = `vital-dot dot-${p.vitals.bmiStatus}`;
+            if (p.vitals) {
+                const v = p.vitals;
+                document.getElementById('vitals-date').textContent = 'Ostatni pomiar: ' + v.lastMeasured;
+                document.getElementById('vitals-grid').innerHTML = `
+                    <div class="vital-item"><div class="vital-dot dot-${v.pressureStatus}"></div><div class="vital-info"><div class="val">${v.pressure}</div><div class="unit">Ciśnienie (mmHg)</div></div></div>
+                    <div class="vital-item"><div class="vital-dot dot-${v.glucoseStatus}"></div><div class="vital-info"><div class="val">${v.glucose}</div><div class="unit">Glukoza (mmol/L)</div></div></div>
+                    <div class="vital-item"><div class="vital-dot dot-${v.hrStatus}"></div><div class="vital-info"><div class="val">${v.hr}</div><div class="unit">Tętno (bpm)</div></div></div>
+                    <div class="vital-item"><div class="vital-dot dot-${v.bmiStatus}"></div><div class="vital-info"><div class="val">${v.bmi}</div><div class="unit">BMI (kg/m²)</div></div></div>`;
+                // Pre-fill vitals modal
+                document.getElementById('v-pressure').value = v.pressure;
+                document.getElementById('v-glucose').value = v.glucose;
+                document.getElementById('v-hr').value = v.hr;
+                document.getElementById('v-bmi').value = v.bmi;
             }
 
             // Allergies
-            if(p.allergies && p.allergies.length > 0) {
-                let html = '';
-                p.allergies.forEach(al => {
-                    html += `<div class="allergy-row"><span>⚠️</span> ${al.name}</div>`;
-                });
-                document.getElementById('allergies-container').innerHTML = html;
+            const algEl = document.getElementById('allergies-container');
+            if (p.allergies && p.allergies.length > 0) {
+                algEl.innerHTML = p.allergies.map(al => `<div class="allergy-row"><span>⚠️</span> ${al.name}</div>`).join('');
+            } else {
+                algEl.innerHTML = '<div style="color:var(--medica-text-secondary); font-size:14px;">Brak zarejestrowanych alergii</div>';
             }
 
             // Meds preview
             const medsBody = document.getElementById('overview-meds-table');
-            if(p.medicationsList && p.medicationsList.length > 0) {
+            medsBody.innerHTML = '';
+            if (p.medicationsList && p.medicationsList.length > 0) {
                 p.medicationsList.forEach(m => {
-                    medsBody.innerHTML += `
-                        <tr>
-                            <td>${m.name}</td>
-                            <td>${m.dose}</td>
-                            <td>${m.freq}</td>
-                            <td>${m.since}</td>
-                            <td>${m.doctor}</td>
-                            <td style="color:var(--medica-green-mid); font-weight:500;">${m.status}</td>
-                        </tr>
-                    `;
+                    medsBody.innerHTML += `<tr>
+                        <td style="font-weight:500;">${m.name}</td><td>${m.dose}</td><td>${m.freq}</td>
+                        <td>${m.since}</td><td>${m.doctor}</td>
+                        <td><span class="badge badge-green" style="font-size:11px;">${m.status}</span></td>
+                    </tr>`;
                 });
             } else {
-                medsBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Brak przepisanych leków</td></tr>`;
+                medsBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:16px; color:var(--medica-text-secondary);">Brak przepisanych leków</td></tr>';
             }
 
-            // Visits Preview (Limit 3)
+            // Visits preview (last 3)
             const visitsBody = document.getElementById('overview-visits-table');
-            const ptAppts = clinicData.appointments.filter(a => a.patientId === p.id);
-            ptAppts.sort((a,b) => b.date.localeCompare(a.date)); // Desc
-            
-            if(ptAppts.length > 0) {
-                ptAppts.slice(0,3).forEach(v => {
-                    const doc = clinicData.users.find(u => u.id === v.doctorId).name;
-                    let typeBadge = '<span class="badge badge-gray">Wizyta</span>';
-                    if(v.notes.includes('Kontrola')) typeBadge = '<span class="badge badge-green">Kontrolna</span>';
-                    if(v.notes.includes('Konsultacja')) typeBadge = '<span class="badge badge-blue">Konsultacja</span>';
-                    
-                    visitsBody.innerHTML += `
-                        <tr>
-                            <td style="width:120px; font-weight:500;">${v.date.split(' ')[0]}</td>
-                            <td>${typeBadge}</td>
-                            <td>${doc}</td>
-                            <td>${v.notes}</td>
-                        </tr>
-                    `;
-                });
+            visitsBody.innerHTML = '';
+            const appts = clinicData.appointments.filter(a => a.patientId === p.id).sort((a,b) => b.date.localeCompare(a.date));
+            if (appts.length === 0) {
+                visitsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:16px; color:var(--medica-text-secondary);">Brak wizyt</td></tr>';
             } else {
-                visitsBody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wizyt w historii</td></tr>`;
+                appts.slice(0,3).forEach(v => {
+                    const doc = clinicData.users.find(u => u.id === v.doctorId);
+                    const isDone = v.status === 'Zrealizowana';
+                    const typeBadge = v.notes.toLowerCase().includes('kontrola') ? 'badge-green' : v.notes.toLowerCase().includes('konsultacja') ? 'badge-blue' : 'badge-gray';
+                    visitsBody.innerHTML += `<tr>
+                        <td style="width:100px; font-weight:500;">${v.date.split(' ')[0]}</td>
+                        <td><span class="badge ${typeBadge}">Wizyta</span></td>
+                        <td>${doc ? doc.name : '—'}</td>
+                        <td>${v.notes}</td>
+                    </tr>`;
+                });
             }
         }
 
         function populateHistory() {
-            const p = currentPatient;
-            const historyTable = document.getElementById('history-table');
-            if(p.icdHistory && p.icdHistory.length > 0) {
-                p.icdHistory.forEach(h => {
-                    let badgeClass = 'badge-gray';
-                    if(h.status === 'Aktywna') badgeClass = 'badge-amber';
-                    if(h.status === 'Przewlekła') badgeClass = 'badge-blue';
-                    
-                    historyTable.innerHTML += `
-                        <tr style="cursor:pointer;">
-                            <td style="width:60px;"><div class="badge-icd">${h.code}</div></td>
-                            <td style="font-weight:400; font-size:14px;">${h.name}</td>
-                            <td style="color:var(--medica-text-secondary); width:100px;">${h.date}</td>
-                            <td style="color:var(--medica-text-secondary); width:150px;">${h.doctor}</td>
-                            <td style="text-align:right; width:120px;"><span class="badge ${badgeClass}">${h.status}</span></td>
-                            <td style="text-align:right; width:40px; color:var(--medica-text-secondary); font-size:16px;">›</td>
-                        </tr>
-                    `;
-                });
-            } else {
-                historyTable.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">Brak udokumentowanej historii chorób.</td></tr>`;
+            const tbody = document.getElementById('history-table');
+            tbody.innerHTML = '';
+            const hist = currentPatient.icdHistory || [];
+            if (hist.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--medica-text-secondary);">Brak udokumentowanej historii chorób</td></tr>';
+                return;
             }
+            hist.forEach(h => {
+                const cls = h.status === 'Aktywna' ? 'badge-amber' : h.status === 'Przewlekła' ? 'badge-blue' : 'badge-gray';
+                tbody.innerHTML += `<tr>
+                    <td><div class="badge-icd">${h.code}</div></td>
+                    <td style="font-weight:400;">${h.name}</td>
+                    <td style="color:var(--medica-text-secondary);">${h.date}</td>
+                    <td style="color:var(--medica-text-secondary);">${h.doctor}</td>
+                    <td><span class="badge ${cls}">${h.status}</span></td>
+                </tr>`;
+            });
         }
 
         function populateMeds() {
-            const p = currentPatient;
-            const medsMTable = document.getElementById('meds-full-table');
-            let activeCount = 0;
-            if(p.medicationsList && p.medicationsList.length > 0) {
-                p.medicationsList.forEach(m => {
-                    if (m.status === 'Aktywny') activeCount++;
-                    medsMTable.innerHTML += `
-                        <tr>
-                            <td style="font-weight:500;">${m.name}</td>
-                            <td>${m.dose}</td>
-                            <td>${m.freq}</td>
-                            <td>${m.since}</td>
-                            <td>${m.nextRx}</td>
-                            <td>${m.doctor}</td>
-                            <td style="color:var(--medica-green-mid); font-weight:500;">${m.status}</td>
-                        </tr>
-                    `;
-                });
-            } else {
-                medsMTable.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Brak przepisanych leków.</td></tr>`;
+            const meds = currentPatient.medicationsList || [];
+            const active = meds.filter(m => m.status === 'Aktywny').length;
+            const inactive = meds.filter(m => m.status !== 'Aktywny').length;
+            const rxCount = meds.filter(m => m.nextRx && m.nextRx !== '-').length;
+            document.getElementById('mc-active-meds').textContent = active;
+            document.getElementById('mc-inactive-meds').textContent = inactive;
+            document.getElementById('mc-rx').textContent = rxCount;
+
+            const tbody = document.getElementById('meds-full-table');
+            tbody.innerHTML = '';
+            if (meds.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--medica-text-secondary);">Brak przepisanych leków</td></tr>';
+                return;
             }
-            document.getElementById('mc-active-meds').textContent = activeCount;
+            meds.forEach((m, i) => {
+                tbody.innerHTML += `<tr>
+                    <td style="font-weight:500;">💊 ${m.name}</td>
+                    <td>${m.dose}</td><td>${m.freq}</td><td>${m.since}</td>
+                    <td>${m.nextRx || '—'}</td><td style="font-size:13px;">${m.doctor}</td>
+                    <td><span class="badge ${m.status === 'Aktywny' ? 'badge-green' : 'badge-gray'}">${m.status}</span></td>
+                    <td><button class="secondary" style="padding:3px 8px; font-size:12px;" onclick="stopMed(${i})">Zakończ</button></td>
+                </tr>`;
+            });
         }
 
         function populateTests() {
-            const testsTable = document.getElementById('tests-table');
-            const patientTests = clinicData.testResults.filter(t => t.patientId === currentPatient.id).sort((a, b) => b.date.localeCompare(a.date));
-
-            if (patientTests.length === 0) {
-                testsTable.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">Brak zapisanych wyników badań.</td></tr>`;
+            const tbody = document.getElementById('tests-table');
+            tbody.innerHTML = '';
+            const tests = clinicData.testResults.filter(t => t.patientId === currentPatient.id).sort((a,b) => b.date.localeCompare(a.date));
+            if (tests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--medica-text-secondary);">Brak zapisanych wyników badań</td></tr>';
                 return;
             }
-
-            patientTests.forEach(test => {
-                const doctor = getDoctorData(test.doctorId);
-                testsTable.innerHTML += `
-                    <tr>
-                        <td style="width:120px; font-weight:500;">${test.date}</td>
-                        <td style="font-weight:500;">${test.name}</td>
-                        <td>${test.result}</td>
-                        <td>${doctor ? doctor.name : 'Brak danych'}</td>
-                    </tr>
-                `;
+            tests.forEach(test => {
+                const doc = clinicData.users.find(u => u.id === test.doctorId);
+                tbody.innerHTML += `<tr>
+                    <td style="font-weight:500;">${test.date}</td>
+                    <td>${test.name}</td>
+                    <td>${test.result || '<span style="color:var(--medica-text-secondary); font-style:italic;">Oczekuje na wynik</span>'}</td>
+                    <td style="font-size:13px;">${doc ? doc.name : '—'}</td>
+                </tr>`;
             });
         }
 
         function populateVisits() {
-            const visitsTable = document.getElementById('visits-table');
-            const patientVisits = clinicData.appointments.filter(a => a.patientId === currentPatient.id).sort((a, b) => b.date.localeCompare(a.date));
-
-            if (patientVisits.length === 0) {
-                visitsTable.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">Brak wizyt w historii.</td></tr>`;
+            const tbody = document.getElementById('visits-table');
+            tbody.innerHTML = '';
+            const visits = clinicData.appointments.filter(a => a.patientId === currentPatient.id).sort((a,b) => b.date.localeCompare(a.date));
+            if (visits.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--medica-text-secondary);">Brak wizyt w historii</td></tr>';
                 return;
             }
-
-            patientVisits.forEach(visit => {
-                const doctor = getDoctorData(visit.doctorId);
-                const badgeClass = visit.status === 'Zrealizowana' ? 'badge-gray' : 'badge-green';
-                visitsTable.innerHTML += `
-                    <tr>
-                        <td style="width:120px; font-weight:500;">${visit.date}</td>
-                        <td>${doctor ? doctor.name : 'Brak danych'}</td>
-                        <td>${visit.notes || 'Konsultacja'}</td>
-                        <td><span class="badge ${badgeClass}">${visit.status}</span></td>
-                    </tr>
-                `;
+            visits.forEach(v => {
+                const doc = clinicData.users.find(u => u.id === v.doctorId);
+                const isDone = v.status === 'Zrealizowana';
+                tbody.innerHTML += `<tr>
+                    <td style="white-space:nowrap;">${v.date}</td>
+                    <td>${doc ? doc.name : '—'}</td>
+                    <td>${v.notes}</td>
+                    <td><span class="badge ${isDone ? 'badge-gray' : 'badge-green'}">${v.status}</span></td>
+                    <td>${!isDone ? `<button class="secondary" style="padding:3px 8px; font-size:12px;" onclick="markVisitDone('${v.id}')">Zrealizuj</button>` : '—'}</td>
+                </tr>`;
             });
         }
 
         function populateDocs() {
-            const docsContainer = document.getElementById('docs-container');
+            const container = document.getElementById('docs-container');
             const docs = currentPatient.docs || [];
-
             if (docs.length === 0) {
-                docsContainer.innerHTML = `<div style="color:var(--medica-text-secondary);">Brak dokumentów do wyświetlenia.</div>`;
+                container.innerHTML = '<div style="color:var(--medica-text-secondary); padding:20px 0;">Brak dokumentów do wyświetlenia.</div>';
                 return;
             }
-
-            docs.forEach((doc, index) => {
-                docsContainer.innerHTML += `
-                    <div class="patient-document-row" style="display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border:1px solid var(--medica-border); border-radius:10px; background:#fff;">
-                        <div>
-                            <div style="font-weight:500;">${doc}</div>
-                            <div style="font-size:13px; color:var(--medica-text-secondary);">Dokument ${index + 1} pacjenta ${currentPatient.name}</div>
-                        </div>
-                        <span class="badge badge-blue">PDF</span>
+            container.innerHTML = docs.map((doc, i) => `
+                <div class="doc-item">
+                    <div>
+                        <div style="font-weight:500;">📄 ${doc}</div>
+                        <div style="font-size:13px; color:var(--medica-text-secondary);">Dokument ${i+1} · ${currentPatient.name}</div>
                     </div>
-                `;
-            });
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="badge badge-blue">PDF</span>
+                        <button class="secondary" style="padding:4px 10px; font-size:13px;" onclick="showToast('Pobieranie: ${doc}')">Pobierz</button>
+                    </div>
+                </div>`).join('');
         }
 
         function populateNotes() {
-            const summaryCard = document.getElementById('patient-summary-card');
-            const notesContainer = document.getElementById('notes-container');
-            const patientVisits = clinicData.appointments.filter(a => a.patientId === currentPatient.id).sort((a, b) => b.date.localeCompare(a.date));
-            const lastVisit = currentPatient.lastVisit || (patientVisits[0] ? patientVisits[0].date : 'Brak danych');
-            const nextVisit = currentPatient.nextVisit || 'Brak planu';
+            const p = currentPatient;
+            const last = p.lastVisit || '—';
+            const next = p.nextVisit || 'Brak planu';
 
-            summaryCard.innerHTML = `
-                <div class="section-header" style="margin-bottom:10px;">
+            document.getElementById('patient-summary-card').innerHTML = `
+                <div class="section-header" style="margin-bottom:12px;">
                     <h3 style="margin:0;">Podsumowanie pacjenta</h3>
-                    <span class="badge badge-green">${currentPatient.status || 'Aktywny pacjent'}</span>
+                    <span class="badge badge-green">${p.status || 'Aktywny pacjent'}</span>
                 </div>
-                <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:12px; font-size:14px;">
-                    <div><strong>Ryzyko:</strong> ${currentPatient.riskLevel || 'Brak danych'}</div>
-                    <div><strong>Grupa krwi:</strong> ${currentPatient.bloodType || 'Brak danych'}</div>
-                    <div><strong>Ubezpieczenie:</strong> ${currentPatient.insurance || 'Brak danych'}</div>
-                    <div><strong>Język:</strong> ${currentPatient.preferredLanguage || 'PL'}</div>
-                    <div><strong>Ostatnia wizyta:</strong> ${lastVisit}</div>
-                    <div><strong>Następna wizyta:</strong> ${nextVisit}</div>
-                    <div style="grid-column: 1 / -1;"><strong>Plan opieki:</strong> ${currentPatient.carePlan || 'Brak danych'}</div>
-                    <div style="grid-column: 1 / -1;"><strong>Kontakt alarmowy:</strong> ${currentPatient.emergencyContact || 'Brak danych'}</div>
-                    <div style="grid-column: 1 / -1;"><strong>Lekarz prowadzący:</strong> ${currentPatient.doctorPrimary || 'Brak danych'}${currentPatient.doctorSecondary ? `, ${currentPatient.doctorSecondary}` : ''}</div>
-                </div>
-            `;
+                <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; font-size:14px;">
+                    <div><strong>Ryzyko:</strong> ${p.riskLevel || '—'}</div>
+                    <div><strong>Grupa krwi:</strong> ${p.bloodType || '—'}</div>
+                    <div><strong>Ubezpieczenie:</strong> ${p.insurance || '—'}</div>
+                    <div><strong>Język:</strong> ${p.preferredLanguage || 'PL'}</div>
+                    <div><strong>Ostatnia wizyta:</strong> ${last}</div>
+                    <div><strong>Następna wizyta:</strong> ${next}</div>
+                    <div style="grid-column:1/-1;"><strong>Plan opieki:</strong> ${p.carePlan || '—'}</div>
+                    <div style="grid-column:1/-1;"><strong>Kontakt alarmowy:</strong> ${p.emergencyContact || '—'}</div>
+                    <div style="grid-column:1/-1;"><strong>Lekarze:</strong> ${p.doctorPrimary || '—'}${p.doctorSecondary ? ', ' + p.doctorSecondary : ''}</div>
+                </div>`;
 
-            const notes = [
-                {
-                    title: 'Notatka bieżąca',
-                    text: currentPatient.notes || 'Brak notatki bieżącej',
-                    meta: 'Ostatnia aktualizacja danych pacjenta'
-                },
-                {
-                    title: 'Zalecenia',
-                    text: currentPatient.carePlan || 'Brak zaleceń',
-                    meta: 'Plan monitorowania i kolejnych kroków'
-                },
-                {
-                    title: 'Informacja kontaktowa',
-                    text: currentPatient.emergencyContact || 'Brak kontaktu alarmowego',
-                    meta: 'Do użycia w sytuacji pilnej'
-                }
-            ];
-
-            notes.forEach(note => {
-                notesContainer.innerHTML += `
-                    <div style="padding:14px 16px; border:1px solid var(--medica-border); border-radius:10px; background:#fff;">
-                        <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:8px;">
-                            <strong>${note.title}</strong>
-                            <span style="font-size:12px; color:var(--medica-text-secondary);">${note.meta}</span>
-                        </div>
-                        <div style="font-size:14px; color:var(--medica-text-primary);">${note.text}</div>
+            const container = document.getElementById('notes-container');
+            container.innerHTML = '';
+            (p._notes || []).forEach((note, i) => {
+                container.innerHTML += `<div class="note-card">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <strong>${note.title}</strong>
+                        <span style="font-size:12px; color:var(--medica-text-secondary);">${note.date || ''} · ${note.meta || ''}</span>
                     </div>
-                `;
+                    <div style="font-size:14px;">${note.text}</div>
+                </div>`;
             });
         }
 
+        // ===== Action handlers =====
+
+        function addVisit() {
+            const date = document.getElementById('visit-date').value;
+            const time = document.getElementById('visit-time').value;
+            const docId = document.getElementById('visit-doctor').value;
+            const notes = document.getElementById('visit-notes').value.trim();
+            const status = document.getElementById('visit-status').value;
+            const errEl = document.getElementById('visit-error');
+            if (!date || !time || !docId || !notes) { errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+            clinicData.appointments.push({ id: 'a' + Date.now(), patientId: currentPatient.id, doctorId: docId, date: `${date} ${time}`, status, notes });
+            closeModal('modal-new-visit');
+            document.getElementById('visit-notes').value = '';
+            document.getElementById('visit-status').value = 'Umówiona';
+            populateOverview(); populateVisits();
+            showToast('Wizyta została zapisana!');
+        }
+
+        function addReferral() {
+            const specialist = document.getElementById('ref-specialist').value.trim();
+            const reason = document.getElementById('ref-reason').value.trim();
+            const urgency = document.getElementById('ref-urgency').value;
+            const errEl = document.getElementById('ref-error');
+            if (!specialist || !reason) { errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+            if (!currentPatient.docs) currentPatient.docs = [];
+            currentPatient.docs.push(`Skierowanie_${specialist.replace(/\s/g,'_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+            closeModal('modal-referral');
+            document.getElementById('ref-specialist').value = '';
+            document.getElementById('ref-reason').value = '';
+            populateDocs();
+            showToast(`Skierowanie do ${specialist} (${urgency}) wystawione!`);
+        }
+
+        function addPrescription() {
+            const name = document.getElementById('rx-name').value.trim();
+            const dose = document.getElementById('rx-dose').value.trim();
+            const freq = document.getElementById('rx-freq').value;
+            const notes = document.getElementById('rx-notes').value.trim();
+            const errEl = document.getElementById('rx-error');
+            if (!name || !dose) { errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+            const today = new Date().toLocaleDateString('pl-PL');
+            const nextRx = new Date(); nextRx.setDate(nextRx.getDate() + 30);
+            if (!currentPatient.medicationsList) currentPatient.medicationsList = [];
+            currentPatient.medicationsList.push({ name, dose, freq, since: today, nextRx: nextRx.toISOString().split('T')[0], doctor: currentDoctor.name, status: 'Aktywny' });
+            closeModal('modal-prescription');
+            document.getElementById('rx-name').value = '';
+            document.getElementById('rx-dose').value = '';
+            document.getElementById('rx-notes').value = '';
+            populateOverview(); populateMeds();
+            showToast(`Recepta na ${name} ${dose} wystawiona!`);
+        }
+
+        function addDiagnosis() {
+            const code = document.getElementById('diag-code').value.trim().toUpperCase();
+            const name = document.getElementById('diag-name').value.trim();
+            const status = document.getElementById('diag-status').value;
+            const errEl = document.getElementById('diag-error');
+            if (!code || !name) { errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+            const today = new Date().toLocaleDateString('pl-PL');
+            if (!currentPatient.icdHistory) currentPatient.icdHistory = [];
+            currentPatient.icdHistory.push({ code, name, date: today, doctor: currentDoctor.name, status });
+            closeModal('modal-add-diagnosis');
+            document.getElementById('diag-code').value = '';
+            document.getElementById('diag-name').value = '';
+            populateHistory();
+            showToast('Diagnoza dodana do historii chorób!');
+        }
+
+        function addMedication() {
+            const name = document.getElementById('med-name').value.trim();
+            const dose = document.getElementById('med-dose').value.trim();
+            const freq = document.getElementById('med-freq').value;
+            const since = document.getElementById('med-since').value;
+            const nextRx = document.getElementById('med-next-rx').value;
+            const errEl = document.getElementById('med-error');
+            if (!name || !dose) { errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+            if (!currentPatient.medicationsList) currentPatient.medicationsList = [];
+            currentPatient.medicationsList.push({ name, dose, freq, since: since || new Date().toLocaleDateString('pl-PL'), nextRx: nextRx || '-', doctor: currentDoctor.name, status: 'Aktywny' });
+            closeModal('modal-add-med');
+            document.getElementById('med-name').value = '';
+            document.getElementById('med-dose').value = '';
+            populateOverview(); populateMeds();
+            showToast('Lek dodany do farmakoterapii!');
+        }
+
+        function addTest() {
+            const name = document.getElementById('test-name').value.trim();
+            const result = document.getElementById('test-result').value.trim();
+            const errEl = document.getElementById('test-error');
+            if (!name) { errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+            clinicData.testResults.push({ id: 't' + Date.now(), patientId: currentPatient.id, doctorId: currentDoctor.id, date: new Date().toISOString().split('T')[0], name, result: result || 'Oczekuje na wynik' });
+            closeModal('modal-add-test');
+            document.getElementById('test-name').value = '';
+            document.getElementById('test-result').value = '';
+            populateTests();
+            showToast('Badanie zostało zlecone!');
+        }
+
+        function addDocument() {
+            const name = document.getElementById('doc-name').value.trim();
+            const type = document.getElementById('doc-type').value;
+            const errEl = document.getElementById('doc-error');
+            if (!name) { errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+            if (!currentPatient.docs) currentPatient.docs = [];
+            currentPatient.docs.push(name.endsWith('.pdf') ? name : name + '.pdf');
+            closeModal('modal-add-doc');
+            document.getElementById('doc-name').value = '';
+            populateDocs();
+            showToast('Dokument dodany!');
+        }
+
+        function addNote() {
+            const title = document.getElementById('note-title').value.trim();
+            const text = document.getElementById('note-text').value.trim();
+            const errEl = document.getElementById('note-error');
+            if (!title || !text) { errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+            const today = new Date().toLocaleDateString('pl-PL');
+            if (!currentPatient._notes) currentPatient._notes = [];
+            currentPatient._notes.unshift({ title, text, meta: 'Dr. ' + currentDoctor.name.split(' ').slice(1).join(' '), date: today });
+            closeModal('modal-add-note');
+            document.getElementById('note-title').value = '';
+            document.getElementById('note-text').value = '';
+            populateNotes();
+            showToast('Notatka kliniczna zapisana!');
+        }
+
+        function updateVitals() {
+            const pressure = document.getElementById('v-pressure').value.trim();
+            const glucose = document.getElementById('v-glucose').value.trim();
+            const hr = document.getElementById('v-hr').value.trim();
+            const bmi = document.getElementById('v-bmi').value.trim();
+            if (!currentPatient.vitals) currentPatient.vitals = {};
+            const v = currentPatient.vitals;
+
+            if (pressure) { v.pressure = pressure; v.pressureStatus = statusFromBP(pressure); }
+            if (glucose) { v.glucose = glucose; v.glucoseStatus = parseFloat(glucose) > 7 ? 'yellow' : 'green'; }
+            if (hr) { v.hr = hr; v.hrStatus = parseInt(hr) > 90 || parseInt(hr) < 55 ? 'yellow' : 'green'; }
+            if (bmi) { v.bmi = bmi; v.bmiStatus = parseFloat(bmi) > 25 || parseFloat(bmi) < 18.5 ? 'yellow' : 'green'; }
+            v.lastMeasured = new Date().toLocaleDateString('pl-PL');
+
+            closeModal('modal-update-vitals');
+            populateOverview();
+            showToast('Parametry życiowe zaktualizowane!');
+        }
+
+        function statusFromBP(bp) {
+            const parts = bp.split('/');
+            if (parts.length < 2) return 'green';
+            const sys = parseInt(parts[0]);
+            return sys >= 140 ? 'yellow' : 'green';
+        }
+
+        function addAllergy() {
+            const name = document.getElementById('allergy-name').value.trim();
+            const errEl = document.getElementById('allergy-error');
+            if (!name) { errEl.classList.remove('hidden'); return; }
+            errEl.classList.add('hidden');
+            if (!currentPatient.allergies) currentPatient.allergies = [];
+            currentPatient.allergies.push({ name });
+            closeModal('modal-add-allergy');
+            document.getElementById('allergy-name').value = '';
+            populateOverview();
+            showToast('Alergia dodana!');
+        }
+
+        function stopMed(index) {
+            if (currentPatient.medicationsList && currentPatient.medicationsList[index]) {
+                currentPatient.medicationsList[index].status = 'Zakończony';
+                populateMeds(); populateOverview();
+                showToast('Lek oznaczony jako zakończony');
+            }
+        }
+
+        function markVisitDone(apptId) {
+            const appt = clinicData.appointments.find(a => a.id === apptId);
+            if (appt) { appt.status = 'Zrealizowana'; populateVisits(); populateOverview(); showToast('Wizyta zrealizowana'); }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
     </script>
 </body>
 </html>
