@@ -39,10 +39,21 @@
             <a href="#" data-view="view-patients">Pacjenci</a>
             <a href="#" data-view="view-visits-all">Wizyty</a>
         </div>
-        <div class="user-profile">
-            <div class="avatar" id="doc-avatar">L</div>
-            <span id="header-info" style="font-weight:500;"></span>
+        <div class="user-profile user-switcher-wrap">
+            <div class="user-switcher-trigger" id="user-switcher-trigger" onclick="toggleUserDropdown()">
+                <div class="avatar" id="doc-avatar">L</div>
+                <span id="header-info" style="font-weight:500;"></span>
+                <span class="user-switcher-chevron">▾</span>
+            </div>
             <button class="secondary" style="padding:6px 12px;" onclick="logout()">Wyloguj</button>
+
+            <div class="user-dropdown" id="user-dropdown">
+                <div class="user-dropdown-header">
+                    <strong>Zmień użytkownika</strong>
+                    <p>Zaloguj się jako dowolny lekarz lub pacjent</p>
+                </div>
+                <div id="users-dropdown-content"></div>
+            </div>
         </div>
     </nav>
 
@@ -218,8 +229,12 @@
         <div class="modal-content">
             <h3 style="margin-top:0;">Weryfikacja tożsamości</h3>
             <p id="verify-patient-name" style="font-weight:500; font-size:16px; margin:12px 0 4px 0;"></p>
-            <p style="font-size:13px; color:var(--medica-text-secondary); margin-bottom:16px;">Podaj datę urodzenia pacjenta (RRRR-MM-DD), aby otworzyć kartę medyczną:</p>
-            <div class="form-group"><label>Data urodzenia</label><input type="date" id="verify-dob"></div>
+            <p style="font-size:13px; color:var(--medica-text-secondary); margin-bottom:16px;">Data urodzenia pacjenta została automatycznie uzupełniona. Kliknij „Autoryzuj", aby otworzyć kartę.</p>
+            <div class="form-group">
+                <label>Data urodzenia</label>
+                <input type="date" id="verify-dob">
+                <p style="margin:6px 0 0; font-size:12px; color:var(--medica-green-mid);">✓ Uzupełniono automatycznie</p>
+            </div>
             <p id="verify-error" class="error-msg hidden">Data urodzenia niezgodna!</p>
             <div class="modal-footer">
                 <button class="secondary" onclick="closeModal('dob-modal')">Anuluj</button>
@@ -320,6 +335,7 @@
             renderCalendar();
             renderOrders();
             populateSelects();
+            populateUserDropdown();
 
             // Set today's date as default for appointment
             const today = new Date().toISOString().split('T')[0];
@@ -548,7 +564,8 @@
             selectedPatientId = pId;
             document.getElementById('verify-patient-name').textContent = pName;
             document.getElementById('verify-error').classList.add('hidden');
-            document.getElementById('verify-dob').value = '';
+            const pat = getPatientData(pId);
+            document.getElementById('verify-dob').value = pat ? pat.dob : '';
             openModal('dob-modal');
         }
 

@@ -36,10 +36,21 @@
             <a href="#" data-view="view-appointments">Wizyty i e-Rejestracja</a>
             <a href="#" data-view="view-results">Wyniki Badań</a>
         </div>
-        <div class="user-profile">
-            <div class="avatar" id="pat-avatar">P</div>
-            <span id="header-info" style="font-weight:500;"></span>
+        <div class="user-profile user-switcher-wrap">
+            <div class="user-switcher-trigger" id="user-switcher-trigger" onclick="toggleUserDropdown()">
+                <div class="avatar" id="pat-avatar">P</div>
+                <span id="header-info" style="font-weight:500;"></span>
+                <span class="user-switcher-chevron">▾</span>
+            </div>
             <button class="secondary" style="padding:6px 12px;" onclick="logout()">Wyloguj</button>
+
+            <div class="user-dropdown" id="user-dropdown">
+                <div class="user-dropdown-header">
+                    <strong>Zmień użytkownika</strong>
+                    <p>Zaloguj się jako dowolny lekarz lub pacjent</p>
+                </div>
+                <div id="users-dropdown-content"></div>
+            </div>
         </div>
     </nav>
 
@@ -301,6 +312,7 @@
             renderReferrals();
             renderDocs();
             populateDoctorSelect();
+            populateUserDropdown();
 
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('book-date').value = today;
