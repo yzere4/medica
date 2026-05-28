@@ -36,6 +36,25 @@
                     <p style="margin:0; color:var(--medica-text-secondary); font-size:14px;">Masz dzisiaj zaplanowane wizyty. Poniżej znajduje się lista twoich pacjentów.</p>
                 </div>
             </div>
+
+            <div class="metrics-grid" style="margin-bottom:24px;">
+                <div class="metric-card">
+                    <div class="metric-label">Specjalizacja</div>
+                    <div class="metric-val" id="doc-specialization" style="font-size:20px;">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Gabinet</div>
+                    <div class="metric-val" id="doc-office" style="font-size:20px;">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Dyżur</div>
+                    <div class="metric-val" id="doc-shift" style="font-size:20px;">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Doświadczenie</div>
+                    <div class="metric-val" id="doc-experience" style="font-size:20px;">-</div>
+                </div>
+            </div>
             
             <div class="dashboard-grid">
                 <div class="card">
@@ -110,6 +129,10 @@
             document.getElementById('header-info').textContent = user.name;
             const docNameEl = document.getElementById('doctor-name');
             if (docNameEl) docNameEl.textContent = user.name.split(' ').slice(1).join(' '); // just last name
+            document.getElementById('doc-specialization').textContent = user.specialization || 'Brak danych';
+            document.getElementById('doc-office').textContent = user.office || 'Brak danych';
+            document.getElementById('doc-shift').textContent = user.shift || 'Brak danych';
+            document.getElementById('doc-experience').textContent = user.experience || 'Brak danych';
 
             // My Appointments
             const myAppts = clinicData.appointments.filter(a => a.doctorId === user.id);

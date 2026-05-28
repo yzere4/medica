@@ -210,11 +210,72 @@
                 </div>
             </div>
 
-            <!-- Tabs Placeholder-->
-            <div id="tab-tests" class="tab-content hidden"><div class="card">Wyniki badań...</div></div>
-            <div id="tab-visits" class="tab-content hidden"><div class="card">Wszystkie wizyty...</div></div>
-            <div id="tab-docs" class="tab-content hidden"><div class="card">Wgrane dokumenty...</div></div>
-            <div id="tab-notes" class="tab-content hidden"><div class="card">Notatki z wizyt...</div></div>
+            <!-- TAB: Wyniki badań -->
+            <div id="tab-tests" class="tab-content hidden">
+                <div class="section-header">
+                    <h2>Wyniki badań laboratoryjnych i obrazowych</h2>
+                    <button style="border-radius:6px;">+ Zleć badanie</button>
+                </div>
+                <div class="card" style="padding:0;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Badanie</th>
+                                <th>Wynik</th>
+                                <th>Zlecił</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tests-table">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: Wizyty -->
+            <div id="tab-visits" class="tab-content hidden">
+                <div class="section-header">
+                    <h2>Historia wizyt i konsultacji</h2>
+                    <button style="border-radius:6px;">+ Nowa wizyta</button>
+                </div>
+                <div class="card" style="padding:0;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Lekarz</th>
+                                <th>Powód</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="visits-table">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: Dokumenty -->
+            <div id="tab-docs" class="tab-content hidden">
+                <div class="section-header">
+                    <h2>Dokumenty pacjenta</h2>
+                    <button style="border-radius:6px;">+ Dodaj dokument</button>
+                </div>
+                <div class="card">
+                    <div id="docs-container" style="display:grid; gap:12px;"></div>
+                </div>
+            </div>
+
+            <!-- TAB: Notatki -->
+            <div id="tab-notes" class="tab-content hidden">
+                <div class="section-header">
+                    <h2>Notatki z konsultacji</h2>
+                    <button style="border-radius:6px;">+ Nowa notatka</button>
+                </div>
+                <div class="card" style="display:grid; gap:16px;">
+                    <div id="patient-summary-card" class="card" style="margin:0; background:var(--medica-green-light); border-color:#d7e9dd;"></div>
+                    <div id="notes-container" style="display:grid; gap:12px;"></div>
+                </div>
+            </div>
 
         </div>
     </div>
@@ -242,6 +303,10 @@
             populateOverview();
             populateHistory();
             populateMeds();
+            populateTests();
+            populateVisits();
+            populateDocs();
+            populateNotes();
 
             // Tabs setup
             document.querySelectorAll('.sidebar-item').forEach(item => {
@@ -403,6 +468,129 @@
                 medsMTable.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Brak przepisanych leków.</td></tr>`;
             }
             document.getElementById('mc-active-meds').textContent = activeCount;
+        }
+
+        function populateTests() {
+            const testsTable = document.getElementById('tests-table');
+            const patientTests = clinicData.testResults.filter(t => t.patientId === currentPatient.id).sort((a, b) => b.date.localeCompare(a.date));
+
+            if (patientTests.length === 0) {
+                testsTable.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">Brak zapisanych wyników badań.</td></tr>`;
+                return;
+            }
+
+            patientTests.forEach(test => {
+                const doctor = getDoctorData(test.doctorId);
+                testsTable.innerHTML += `
+                    <tr>
+                        <td style="width:120px; font-weight:500;">${test.date}</td>
+                        <td style="font-weight:500;">${test.name}</td>
+                        <td>${test.result}</td>
+                        <td>${doctor ? doctor.name : 'Brak danych'}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function populateVisits() {
+            const visitsTable = document.getElementById('visits-table');
+            const patientVisits = clinicData.appointments.filter(a => a.patientId === currentPatient.id).sort((a, b) => b.date.localeCompare(a.date));
+
+            if (patientVisits.length === 0) {
+                visitsTable.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">Brak wizyt w historii.</td></tr>`;
+                return;
+            }
+
+            patientVisits.forEach(visit => {
+                const doctor = getDoctorData(visit.doctorId);
+                const badgeClass = visit.status === 'Zrealizowana' ? 'badge-gray' : 'badge-green';
+                visitsTable.innerHTML += `
+                    <tr>
+                        <td style="width:120px; font-weight:500;">${visit.date}</td>
+                        <td>${doctor ? doctor.name : 'Brak danych'}</td>
+                        <td>${visit.notes || 'Konsultacja'}</td>
+                        <td><span class="badge ${badgeClass}">${visit.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function populateDocs() {
+            const docsContainer = document.getElementById('docs-container');
+            const docs = currentPatient.docs || [];
+
+            if (docs.length === 0) {
+                docsContainer.innerHTML = `<div style="color:var(--medica-text-secondary);">Brak dokumentów do wyświetlenia.</div>`;
+                return;
+            }
+
+            docs.forEach((doc, index) => {
+                docsContainer.innerHTML += `
+                    <div class="patient-document-row" style="display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border:1px solid var(--medica-border); border-radius:10px; background:#fff;">
+                        <div>
+                            <div style="font-weight:500;">${doc}</div>
+                            <div style="font-size:13px; color:var(--medica-text-secondary);">Dokument ${index + 1} pacjenta ${currentPatient.name}</div>
+                        </div>
+                        <span class="badge badge-blue">PDF</span>
+                    </div>
+                `;
+            });
+        }
+
+        function populateNotes() {
+            const summaryCard = document.getElementById('patient-summary-card');
+            const notesContainer = document.getElementById('notes-container');
+            const patientVisits = clinicData.appointments.filter(a => a.patientId === currentPatient.id).sort((a, b) => b.date.localeCompare(a.date));
+            const lastVisit = currentPatient.lastVisit || (patientVisits[0] ? patientVisits[0].date : 'Brak danych');
+            const nextVisit = currentPatient.nextVisit || 'Brak planu';
+
+            summaryCard.innerHTML = `
+                <div class="section-header" style="margin-bottom:10px;">
+                    <h3 style="margin:0;">Podsumowanie pacjenta</h3>
+                    <span class="badge badge-green">${currentPatient.status || 'Aktywny pacjent'}</span>
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:12px; font-size:14px;">
+                    <div><strong>Ryzyko:</strong> ${currentPatient.riskLevel || 'Brak danych'}</div>
+                    <div><strong>Grupa krwi:</strong> ${currentPatient.bloodType || 'Brak danych'}</div>
+                    <div><strong>Ubezpieczenie:</strong> ${currentPatient.insurance || 'Brak danych'}</div>
+                    <div><strong>Język:</strong> ${currentPatient.preferredLanguage || 'PL'}</div>
+                    <div><strong>Ostatnia wizyta:</strong> ${lastVisit}</div>
+                    <div><strong>Następna wizyta:</strong> ${nextVisit}</div>
+                    <div style="grid-column: 1 / -1;"><strong>Plan opieki:</strong> ${currentPatient.carePlan || 'Brak danych'}</div>
+                    <div style="grid-column: 1 / -1;"><strong>Kontakt alarmowy:</strong> ${currentPatient.emergencyContact || 'Brak danych'}</div>
+                    <div style="grid-column: 1 / -1;"><strong>Lekarz prowadzący:</strong> ${currentPatient.doctorPrimary || 'Brak danych'}${currentPatient.doctorSecondary ? `, ${currentPatient.doctorSecondary}` : ''}</div>
+                </div>
+            `;
+
+            const notes = [
+                {
+                    title: 'Notatka bieżąca',
+                    text: currentPatient.notes || 'Brak notatki bieżącej',
+                    meta: 'Ostatnia aktualizacja danych pacjenta'
+                },
+                {
+                    title: 'Zalecenia',
+                    text: currentPatient.carePlan || 'Brak zaleceń',
+                    meta: 'Plan monitorowania i kolejnych kroków'
+                },
+                {
+                    title: 'Informacja kontaktowa',
+                    text: currentPatient.emergencyContact || 'Brak kontaktu alarmowego',
+                    meta: 'Do użycia w sytuacji pilnej'
+                }
+            ];
+
+            notes.forEach(note => {
+                notesContainer.innerHTML += `
+                    <div style="padding:14px 16px; border:1px solid var(--medica-border); border-radius:10px; background:#fff;">
+                        <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:8px;">
+                            <strong>${note.title}</strong>
+                            <span style="font-size:12px; color:var(--medica-text-secondary);">${note.meta}</span>
+                        </div>
+                        <div style="font-size:14px; color:var(--medica-text-primary);">${note.text}</div>
+                    </div>
+                `;
+            });
         }
 
     </script>

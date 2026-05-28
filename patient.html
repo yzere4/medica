@@ -47,6 +47,25 @@
                 </div>
             </div>
 
+            <div class="metrics-grid" style="margin-bottom:24px;">
+                <div class="metric-card">
+                    <div class="metric-label">Grupa krwi</div>
+                    <div class="metric-val" id="pat-blood">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Ubezpieczenie</div>
+                    <div class="metric-val" id="pat-insurance">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Następna wizyta</div>
+                    <div class="metric-val" id="pat-next-visit" style="font-size:20px;">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Kontakt alarmowy</div>
+                    <div class="metric-val" id="pat-emergency" style="font-size:20px;">-</div>
+                </div>
+            </div>
+
             <div class="dashboard-grid">
                 <!-- Informacje medyczne -->
                 <div class="card">
@@ -123,6 +142,10 @@
 
             document.getElementById('pat-pesel').textContent = user.id.replace('PAT', '980102') + '123';
             document.getElementById('pat-dob').textContent = user.dob || "Brak danych";
+            document.getElementById('pat-blood').textContent = user.bloodType || 'Brak danych';
+            document.getElementById('pat-insurance').textContent = user.insurance || 'Brak danych';
+            document.getElementById('pat-next-visit').textContent = user.nextVisit || 'Brak';
+            document.getElementById('pat-emergency').textContent = user.emergencyContact ? user.emergencyContact.split(',')[0] : 'Brak';
             
             // Info
             document.getElementById('pat-history').textContent = user.history;
