@@ -178,7 +178,7 @@
             
             if (pat && pat.dob === dateVal) {
                 closeModal();
-                window.location.href = \`doctor_patient_view.html?patId=\${selectedPatientId}\`;
+                window.location.href = `doctor_patient_view.html?patId=${selectedPatientId}`;
             } else {
                 document.getElementById('verify-error').classList.remove('hidden');
             }

@@ -114,7 +114,7 @@
             }
 
             document.getElementById('header-info').textContent = user.name;
-            document.getElementById('patient-welcome').textContent = \`Witaj, \${user.name}\`;
+            document.getElementById('patient-welcome').textContent = `Witaj, ${user.name}`;
             
             // Set initials
             const inits = user.name.split(' ').map(n=>n[0]).join('').substring(0,2);
@@ -133,10 +133,10 @@
             const docsList = document.getElementById('pat-docs');
             if(user.docs && user.docs.length > 0) {
                 user.docs.forEach(doc => {
-                    docsList.innerHTML += \`<li><a href="#" style="text-decoration:none;">📋 \${doc}</a> (Plik PDF)</li>\`;
+                    docsList.innerHTML += `<li><a href="#" style="text-decoration:none;">📋 ${doc}</a> (Plik PDF)</li>`;
                 });
             } else {
-                docsList.innerHTML = \`<li style="color:var(--medica-text-secondary);">Brak zdigitalizowanych dokumentów</li>\`;
+                docsList.innerHTML = `<li style="color:var(--medica-text-secondary);">Brak zdigitalizowanych dokumentów</li>`;
             }
 
             // Results
@@ -145,10 +145,10 @@
             if(userResults.length > 0) {
                 userResults.forEach(res => {
                     const doctor = getDoctorData(res.doctorId);
-                    resultsList.innerHTML += \`<li style="margin-bottom:8px;"><strong>\${res.date} - <span style="color:var(--medica-green-mid);">\${res.name}</span>:</strong> \${res.result} <br><small style="color:var(--medica-text-secondary);">Zlecił: \${doctor.name}</small></li>\`;
+                    resultsList.innerHTML += `<li style="margin-bottom:8px;"><strong>${res.date} - <span style="color:var(--medica-green-mid);">${res.name}</span>:</strong> ${res.result} <br><small style="color:var(--medica-text-secondary);">Zlecił: ${doctor.name}</small></li>`;
                 });
             } else {
-                resultsList.innerHTML = \`<li style="color:var(--medica-text-secondary);">Brak zarchiwizowanych wyników badań laboratoryjnych</li>\`;
+                resultsList.innerHTML = `<li style="color:var(--medica-text-secondary);">Brak zarchiwizowanych wyników badań laboratoryjnych</li>`;
             }
 
             // Appointments
@@ -159,20 +159,20 @@
             userAppts.sort((a,b) => b.date.localeCompare(a.date));
 
             if (userAppts.length === 0) {
-                apptBody.innerHTML = \`<tr><td colspan="4" style="text-align:center; color:var(--medica-text-secondary); padding: 20px;">Brak historii wizyt / Brak nadchodzących rezerwacji</td></tr>\`;
+                apptBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--medica-text-secondary); padding: 20px;">Brak historii wizyt / Brak nadchodzących rezerwacji</td></tr>`;
             }
 
             userAppts.forEach(appt => {
                 const doctor = getDoctorData(appt.doctorId);
                 const isDone = appt.status === 'Zrealizowana';
-                apptBody.innerHTML += \`
+                apptBody.innerHTML += `
                     <tr>
-                        <td>\${appt.date}</td>
-                        <td style="font-weight:500;">\${doctor.name}</td>
-                        <td style="color:var(--medica-text-secondary);">\${appt.reason || 'Konsultacja medyczna'}</td>
-                        <td><span class="badge \${isDone ? 'badge-gray' : 'badge-green'}">\${appt.status}</span></td>
+                        <td>${appt.date}</td>
+                        <td style="font-weight:500;">${doctor.name}</td>
+                        <td style="color:var(--medica-text-secondary);">${appt.reason || 'Konsultacja medyczna'}</td>
+                        <td><span class="badge ${isDone ? 'badge-gray' : 'badge-green'}">${appt.status}</span></td>
                     </tr>
-                \`;
+                `;
             });
         });
     </script>
